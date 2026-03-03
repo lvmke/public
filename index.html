@@ -92,4 +92,113 @@
 </head>
 <body>
   <div class="controls">
-    <label>Work
+    <label>Work (s): <input id="setTime" type="number" value="30" min="1"></label>
+    <label>Rest (s): <input id="restTime" type="number" value="15" min="1"></label>
+    <label>Sets: <input id="sets" type="number" value="5" min="1"></label>
+    <button id="start">▶ Start</button>
+    <button id="pause">⏸ Pause</button>
+    <button id="reset">🔄 Reset</button>
+  </div>
+  <div id="display">00:00</div>
+  <div id="status">Ready</div>
+
+  <script>
+let timer, totalSets, currentSet = 0, isWork = true, timeLeft = 0, isPaused = false;
+const setTimeInput = document.getElementById('setTime');
+const restTimeInput = document.getElementById('restTime');
+const setsInput = document.getElementById('sets');
+const display = document.getElementById('display');
+const status = document.getElementById('status');
+const startBtn = document.getElementById('start');
+const pauseBtn = document.getElementById('pause');
+const resetBtn = document.getElementById('reset');
+
+function playBeep(freq = 800, dur = 300, volume = 0.4) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur / 1000);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + dur / 1000);
+}
+
+function updateDisplay() {
+  const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const secs = (timeLeft % 60).toString().padStart(2, '0');
+  display.textContent = `${mins}:${secs}`;
+  display.className = isWork ? 'work' : 'rest';
+  status.textContent = `${isWork ? 'Work' : 'Rest'} Set ${currentSet}/${totalSets}`;
+}
+
+function nextPhase() {
+  // Loud main sound at end
+  playBeep(isWork ? 523 : 784, 400, 0.5);
+  isWork = !isWork;
+  timeLeft = isWork ? parseInt(setTimeInput.value) || 30 : parseInt(restTimeInput.value) || 15;
+  if (!isWork) currentSet++;
+  if (currentSet > totalSets) { 
+    clearInterval(timer); 
+    status.textContent = 'Workout Complete!'; 
+    playBeep(659, 800, 0.6); // Victory tone
+    return; 
+  }
+  updateDisplay();
+}
+
+function tick() {
+  timeLeft--;
+  // Prevent extra second: check zero first
+  if (timeLeft <= 0) return nextPhase();
+  
+  // Warnings: beep on entry to 3s,2s,1s states
+  if (timeLeft <= 3 && timeLeft > 0) {
+    playBeep(1000, 200, 0.15); // Soft high beep
+  }
+  
+  updateDisplay();
+  
+ // Shows correct time, never 00:00 mid-cycle
+}
+
+// Event listeners unchanged
+startBtn.onclick = () => {
+  if (timer) clearInterval(timer);
+  totalSets = parseInt(setsInput.value) || 5;
+  currentSet = 1;
+  isWork = true;
+  timeLeft = parseInt(setTimeInput.value) || 30;
+  updateDisplay();
+  timer = setInterval(tick, 1000);
+  startBtn.textContent = '⏹ Stop';
+};
+
+pauseBtn.onclick = () => { 
+  if (timer) {
+    clearInterval(timer); 
+    timer = null; 
+  } else if (!isPaused) {
+    timer = setInterval(tick, 1000);
+  }
+  isPaused = !isPaused;
+  pauseBtn.textContent = timer ? '⏸ Pause' : '▶ Resume';
+};
+
+resetBtn.onclick = () => {
+  clearInterval(timer);
+  timer = null;
+  currentSet = 0;
+  timeLeft = 0;
+  isPaused = false;
+  display.textContent = '00:00';
+  status.textContent = 'Ready';
+  startBtn.textContent = '▶ Start';
+  pauseBtn.textContent = '⏸ Pause';
+};
+
+  </script>
+</body>
+</html>
