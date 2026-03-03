@@ -5,94 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sports Timer</title>
   <style>
-    body { font-family: Arial; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f0f0; }
-    #display { font-size: 4rem; font-weight: bold; margin: 20px; }
-    .work { color: red; }
-    .rest { color: green; }
-    input, button { font-size: 1.2rem; padding: 10px; margin: 10px; width: 80%; max-width: 200px; }
-    @media (max-width: 600px) { #display { font-size: 3rem; } }
+    :root {
+      --bg: #121212;
+      --bg-alt: #1e1e1e;
+      --text: #e0e0e0;
+      --text-dim: #b0b0b0;
+      --work: #ff6b6b;
+      --rest: #51cf66;
+      --accent: #4dabf7;
+      --border: #333;
+    }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      height: 100vh; 
+      margin: 0; 
+      padding: 20px; 
+      box-sizing: border-box;
+    }
+    #display { 
+      font-size: 6rem; 
+      font-weight: 300; 
+      font-variant-numeric: tabular-nums; 
+      margin: 20px 0; 
+      text-shadow: 0 0 20px currentColor;
+      min-height: 1.2em;
+    }
+    .work { color: var(--work); }
+    .rest { color: var(--rest); }
+    #status { 
+      font-size: 1.5rem; 
+      color: var(--text-dim); 
+      margin-bottom: 30px;
+    }
+    .controls { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 15px; 
+      justify-content: center; 
+      max-width: 400px; 
+      width: 100%;
+    }
+    label { 
+      display: flex; 
+      flex-direction: column; 
+      font-size: 1.1rem; 
+      color: var(--text-dim);
+    }
+    input[type="number"] { 
+      background: var(--bg-alt); 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      color: var(--text); 
+      font-size: 1.2rem; 
+      padding: 12px; 
+      margin-top: 5px; 
+      width: 120px; 
+      text-align: center;
+    }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.3); }
+    button { 
+      background: linear-gradient(145deg, var(--bg-alt), #2a2a2a); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      color: var(--text); 
+      font-size: 1.1rem; 
+      font-weight: 500; 
+      padding: 12px 24px; 
+      cursor: pointer; 
+      transition: all 0.2s;
+      min-width: 80px;
+    }
+    button:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    @media (max-width: 600px) { 
+      #display { font-size: 4rem; } 
+      .controls { flex-direction: column; align-items: stretch; }
+      input[type="number"], button { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <div>
-    <label>Set Time (s): <input id="setTime" type="number" value="30" min="1"></label>
-    <label>Rest Time (s): <input id="restTime" type="number" value="15" min="1"></label>
-    <label>Sets: <input id="sets" type="number" value="5" min="1"></label>
-    <button id="start">Start</button>
-    <button id="pause">Pause</button>
-    <button id="reset">Reset</button>
-  </div>
-  <div id="display">00:00</div>
-  <div id="status">Ready</div>
-
-  <script>
-    let timer, totalSets, currentSet = 0, isWork = true, timeLeft = 0, isPaused = false;
-    const setTimeInput = document.getElementById('setTime');
-    const restTimeInput = document.getElementById('restTime');
-    const setsInput = document.getElementById('sets');
-    const display = document.getElementById('display');
-    const status = document.getElementById('status');
-    const startBtn = document.getElementById('start');
-    const pauseBtn = document.getElementById('pause');
-    const resetBtn = document.getElementById('reset');
-
-    function playBeep(freq = 800, dur = 200) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur / 1000);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + dur / 1000);
-    }
-
-    function updateDisplay() {
-      const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-      const secs = (timeLeft % 60).toString().padStart(2, '0');
-      display.textContent = `${mins}:${secs}`;
-      display.className = isWork ? 'work' : 'rest';
-      status.textContent = `${isWork ? 'Work' : 'Rest'} - Set ${currentSet}/${totalSets}`;
-    }
-
-    function nextPhase() {
-      playBeep(isWork ? 400 : 800);
-      isWork = !isWork;
-      timeLeft = isWork ? parseInt(setTimeInput.value) : parseInt(restTimeInput.value);
-      if (!isWork && currentSet < totalSets) currentSet++;
-      if (currentSet >= totalSets && !isWork) { clearInterval(timer); status.textContent = 'Done!'; return; }
-      updateDisplay();
-    }
-
-    function tick() {
-      if (timeLeft <= 0) return nextPhase();
-      if (timeLeft <= 10) playBeep(1000, 100);
-      timeLeft--;
-      updateDisplay();
-    }
-
-    startBtn.onclick = () => {
-      if (timer) clearInterval(timer);
-      totalSets = parseInt(setsInput.value);
-      currentSet = 1;
-      isWork = true;
-      timeLeft = parseInt(setTimeInput.value);
-      updateDisplay();
-      timer = setInterval(tick, 1000);
-    };
-
-    pauseBtn.onclick = () => { if (timer) { clearInterval(timer); timer = null; isPaused = true; } };
-
-    resetBtn.onclick = () => {
-      clearInterval(timer);
-      timer = null;
-      currentSet = 0;
-      timeLeft = 0;
-      display.textContent = '00:00';
-      status.textContent = 'Ready';
-    };
-  </script>
-</body>
-</html>
+  <div class="controls">
+    <label>Work
