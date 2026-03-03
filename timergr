@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Timer</title>
+    <style>
+        body { background: #121212; color: #fff; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        input, button { background: #333; color: #fff; border: 1px solid #555; padding: 10px; margin: 10px; width: 80%; max-width: 300px; }
+        #timer { font-size: 48px; }
+        @media (max-width: 600px) { #timer { font-size: 36px; } }
+    </style>
+</head>
+<body>
+    <h1>Sports Timer</h1>
+    <label>Set Time (seconds): <input type="number" id="setTime" value="60" min="1"></label>
+    <label>Rest Time (seconds): <input type="number" id="restTime" value="30" min="1"></label>
+    <label>Number of Sets: <input type="number" id="sets" value="5" min="1"></label>
+    <button onclick="startTimer()">Start</button>
+    <div id="status"></div>
+    <div id="timer">00:00</div>
+    <audio id="setSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio> <!-- Placeholder beep -->
+    <audio id="restSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio> <!-- Another placeholder beep -->
+    <script>
+        let interval, currentSet = 0, isSet = true;
+        function startTimer() {
+            const setTime = parseInt(document.getElementById('setTime').value) * 1000;
+            const restTime = parseInt(document.getElementById('restTime').value) * 1000;
+            const totalSets = parseInt(document.getElementById('sets').value);
+            currentSet = 1;
+            runTimer(setTime, true, totalSets, setTime, restTime);
+        }
+        function runTimer(time, isSetPhase, totalSets, setTime, restTime) {
+            let remaining = time / 1000;
+            document.getElementById('status').textContent = `Set ${currentSet} - ${isSetPhase ? 'Work' : 'Rest'}`;
+            interval = setInterval(() => {
+                remaining--;
+                document.getElementById('timer').textContent = `${Math.floor(remaining / 60).toString().padStart(2, '0')}:${(remaining % 60).toString().padStart(2, '0')}`;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    playSound(isSetPhase ? 'setSound' : 'restSound');
+                    if (isSetPhase) {
+                        if (currentSet < totalSets) runTimer(restTime, false, totalSets, setTime, restTime);
+                        else alert('Workout complete!');
+                    } else {
+                        currentSet++;
+                        runTimer(setTime, true, totalSets, setTime, restTime);
+                    }
+                }
+            }, 1000);
+        }
+        function playSound(id) { document.getElementById(id).play(); }
+    </script>
+</body>
+</html>
