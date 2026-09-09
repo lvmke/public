@@ -335,6 +335,9 @@
                     <button class="btn secondary" id="btn-reset">Сброс</button>
                     <button class="btn secondary" id="btn-skip">Пропустить</button>
                 </div>
+                <div class="btn-row">
+                    <button class="btn secondary" id="btn-back-to-presets">Назад</button>
+                </div>
                 <div class="sound-toggle">
                     <span>Звук</span>
                     <input type="checkbox" id="sound-toggle" checked>
@@ -426,6 +429,7 @@
             const btnStartPause = document.getElementById('btn-start-pause');
             const btnReset = document.getElementById('btn-reset');
             const btnSkip = document.getElementById('btn-skip');
+            const btnBackToPresets = document.getElementById('btn-back-to-presets');
             const soundToggle = document.getElementById('sound-toggle');
             const wakeLockWarning = document.getElementById('wake-lock-warning');
 
@@ -913,6 +917,11 @@
 
             btnReset.addEventListener('click', resetTimer);
             btnSkip.addEventListener('click', skipPhase);
+
+            btnBackToPresets.addEventListener('click', () => {
+                stopTimer();
+                showScreen('presets');
+            });
 
             soundToggle.addEventListener('change', (e) => {
                 timerState.soundEnabled = e.target.checked;
