@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Интервальный таймер</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface2: #2a2a2a;
+            --text: #f5f5f5;
+            --text-dim: #b0b0b0;
+            --accent-work: #ff5252;
+            --accent-rest: #4caf50;
+            --accent-warmup: #ffb74d;
+            --accent-cooldown: #64b5f6;
+            --accent-neutral: #9e9e9e;
+            --btn-bg: #333;
+            --btn-hover: #444;
+            --btn-active: #555;
+            --border: #3a3a3a;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .preset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .preset-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preset-item:hover {
+            background: var(--btn-hover);
+        }
+
+        .preset-item .name {
+            font-weight: 500;
+        }
+
+        .preset-item .meta {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .btn {
+            background: var(--btn-bg);
+            color: var(--text);
+            border: none;
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--btn-hover);
+        }
+
+        .btn:active {
+            background: var(--btn-active);
+            transform: scale(0.98);
+        }
+
+        .btn.secondary {
+            background: #2c2c2c;
+        }
+
+        .btn.danger {
+            background: #b71c1c;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-work);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer-display {
+            font-size: 5rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.1;
+            letter-spacing: 2px;
+            transition: color 0.3s;
+        }
+
+        .phase-label {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .round-indicator {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--surface2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: var(--accent-work);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface2);
+            padding: 10px 16px;
+            border-radius: var(--radius);
+        }
+
+        .sound-toggle label {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .warning {
+            background: #3e2723;
+            color: #ffccbc;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        @media (max-width: 400px) {
+            .timer-display {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <!-- Screen: preset list -->
+        <div id="screen-presets" class="screen active">
+            <h1>Тренировки</h1>
+            <div class="preset-list" id="preset-list"></div>
+            <div class="btn-row">
+                <button class="btn" id="btn-new-preset">Создать</button>
+                <button class="btn secondary" id="btn-import">Импорт</button>
+            </div>
+            <div class="btn-row">
+                <button class="btn secondary" id="btn-export-all">Экспорт всех</button>
+            </div>
+        </div>
+
+        <!-- Screen: edit preset -->
+        <div id="screen-edit" class="screen">
+            <h2 id="edit-title">Новый пресет</h2>
+            <div class="form-group">
+                <label for="preset-name">Название</label>
+                <input type="text" id="preset-name" placeholder="Название тренировки">
+            </div>
+            <div class="form-group">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="warmup-enabled">
+                    <label for="warmup-enabled">Разминка</label>
+                </div>
+                <input type="number" id="warmup-seconds" min="0" step="1" value="30" placeholder="Секунды">
+            </div>
+            <div class="form-group">
+                <label for="work-seconds">Работа (сек)</label>
+                <input type="number" id="work-seconds" min="1" step="1" value="20">
+            </div>
+            <div class="form-group">
+                <label for="rest-seconds">Отдых (сек)</label>
+                <input type="number" id="rest-seconds" min="0" step="1" value="10">
+            </div>
+            <div class="form-group">
+                <label for="rounds">Раунды</label>
+                <input type="number" id="rounds" min="1" step="1" value="8">
+            </div>
+            <div class="form-group">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="cooldown-enabled">
+                    <label for="cooldown-enabled">Заминка</label>
+                </div>
+                <input type="number" id="cooldown-seconds" min="0" step="1" value="30" placeholder="Секунды">
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="btn-save-preset">Сохранить</button>
+                <button class="btn secondary" id="btn-cancel-edit">Отмена</button>
+            </div>
+            <div class="btn-row">
+                <button class="btn secondary" id="btn-export-preset">Экспорт</button>
+                <button class="btn danger" id="btn-delete-preset">Удалить</button>
+            </div>
+        </div>
+
+        <!-- Screen: timer -->
+        <div id="screen-timer" class="screen">
+            <div class="phase-label" id="phase-label">Работа</div>
+            <div class="timer-display" id="timer-display">00:00</div>
+            <div class="round-indicator" id="round-indicator">Раунд 1 из 8</div>
+            <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
+            <div class="controls">
+                <div class="btn-row">
+                    <button class="btn" id="btn-start-pause">Старт</button>
+                    <button class="btn secondary" id="btn-reset">Сброс</button>
+                    <button class="btn secondary" id="btn-skip">Пропустить</button>
+                </div>
+                <div class="sound-toggle">
+                    <span>Звук</span>
+                    <input type="checkbox" id="sound-toggle" checked>
+                </div>
+                <div class="warning hidden" id="wake-lock-warning">Wake Lock не поддерживается, экран может гаснуть.</div>
+            </div>
+        </div>
+
+        <!-- Screen: finish -->
+        <div id="screen-finish" class="screen">
+            <h2>Тренировка завершена!</h2>
+            <p id="finish-summary"></p>
+            <div class="btn-row">
+                <button class="btn" id="btn-repeat">Повторить</button>
+                <button class="btn secondary" id="btn-to-presets">К пресетам</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="import-file" accept=".json" style="display:none">
+
+    <script>
+        (function() {
+            // ---------- Constants ----------
+            const STORAGE_KEY = 'interval_timer_presets_v1';
+            const DEFAULT_PRESETS = [
+                { id: 'tabata-classic', name: 'Табата классика', warmup: { enabled: false, seconds: 0 }, work: { seconds: 20 }, rest: { seconds: 10 }, rounds: 8, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'hiit-beginner', name: 'HIIT новичок', warmup: { enabled: true, seconds: 60 }, work: { seconds: 30 }, rest: { seconds: 30 }, rounds: 6, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'hiit-advanced', name: 'HIIT продвинутый', warmup: { enabled: true, seconds: 60 }, work: { seconds: 40 }, rest: { seconds: 20 }, rounds: 10, cooldown: { enabled: true, seconds: 60 } },
+                { id: 'strength-sets', name: 'Силовые подходы', warmup: { enabled: false, seconds: 0 }, work: { seconds: 45 }, rest: { seconds: 90 }, rounds: 5, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'boxing-rounds', name: 'Бокс — раунды', warmup: { enabled: false, seconds: 0 }, work: { seconds: 180 }, rest: { seconds: 60 }, rounds: 3, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'circuit-training', name: 'Круговая тренировка', warmup: { enabled: true, seconds: 30 }, work: { seconds: 40 }, rest: { seconds: 15 }, rounds: 12, cooldown: { enabled: true, seconds: 60 } },
+                { id: 'stretch-mobility', name: 'Растяжка/мобилити', warmup: { enabled: false, seconds: 0 }, work: { seconds: 60 }, rest: { seconds: 15 }, rounds: 6, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'sprints', name: 'Спринты', warmup: { enabled: true, seconds: 60 }, work: { seconds: 15 }, rest: { seconds: 45 }, rounds: 10, cooldown: { enabled: false, seconds: 0 } },
+                { id: 'plyometrics', name: 'Плиометрика', warmup: { enabled: true, seconds: 60 }, work: { seconds: 20 }, rest: { seconds: 40 }, rounds: 8, cooldown: { enabled: true, seconds: 60 } },
+                { id: 'breathing', name: 'Дыхательные упражнения', warmup: { enabled: false, seconds: 0 }, work: { seconds: 60 }, rest: { seconds: 30 }, rounds: 4, cooldown: { enabled: false, seconds: 0 } }
+            ];
+
+            // ---------- State ----------
+            let presets = [];
+            let currentPresetId = null;
+            let editingPresetId = null; // null for new
+            let timerState = {
+                running: false,
+                paused: false,
+                phase: 'idle', // 'warmup','work','rest','cooldown','finished'
+                round: 0,
+                totalRounds: 0,
+                timeLeft: 0,
+                totalTimeInPhase: 0,
+                intervalId: null,
+                wakeLock: null,
+                wakeLockSupported: false,
+                soundEnabled: true,
+                lastTickSecond: -1,
+            };
+
+            // ---------- DOM refs ----------
+            const screens = {
+                presets: document.getElementById('screen-presets'),
+                edit: document.getElementById('screen-edit'),
+                timer: document.getElementById('screen-timer'),
+                finish: document.getElementById('screen-finish'),
+            };
+            const presetListEl = document.getElementById('preset-list');
+            const btnNewPreset = document.getElementById('btn-new-preset');
+            const btnImport = document.getElementById('btn-import');
+            const btnExportAll = document.getElementById('btn-export-all');
+            const importFileInput = document.getElementById('import-file');
+
+            const editTitle = document.getElementById('edit-title');
+            const presetNameInput = document.getElementById('preset-name');
+            const warmupEnabledCheckbox = document.getElementById('warmup-enabled');
+            const warmupSecondsInput = document.getElementById('warmup-seconds');
+            const workSecondsInput = document.getElementById('work-seconds');
+            const restSecondsInput = document.getElementById('rest-seconds');
+            const roundsInput = document.getElementById('rounds');
+            const cooldownEnabledCheckbox = document.getElementById('cooldown-enabled');
+            const cooldownSecondsInput = document.getElementById('cooldown-seconds');
+            const btnSavePreset = document.getElementById('btn-save-preset');
+            const btnCancelEdit = document.getElementById('btn-cancel-edit');
+            const btnExportPreset = document.getElementById('btn-export-preset');
+            const btnDeletePreset = document.getElementById('btn-delete-preset');
+
+            const phaseLabel = document.getElementById('phase-label');
+            const timerDisplay = document.getElementById('timer-display');
+            const roundIndicator = document.getElementById('round-indicator');
+            const progressFill = document.getElementById('progress-fill');
+            const btnStartPause = document.getElementById('btn-start-pause');
+            const btnReset = document.getElementById('btn-reset');
+            const btnSkip = document.getElementById('btn-skip');
+            const soundToggle = document.getElementById('sound-toggle');
+            const wakeLockWarning = document.getElementById('wake-lock-warning');
+
+            const finishSummary = document.getElementById('finish-summary');
+            const btnRepeat = document.getElementById('btn-repeat');
+            const btnToPresets = document.getElementById('btn-to-presets');
+
+            // ---------- Utility ----------
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function getPresetById(id) {
+                return presets.find(p => p.id === id);
+            }
+
+            function generateId() {
+                return 'preset-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+            }
+
+            function loadPresets() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        presets = JSON.parse(stored);
+                    } catch (e) {
+                        presets = [];
+                    }
+                } else {
+                    presets = DEFAULT_PRESETS.map(p => ({ ...p }));
+                }
+                // ensure defaults exist if storage empty
+                if (presets.length === 0) {
+                    presets = DEFAULT_PRESETS.map(p => ({ ...p }));
+                }
+            }
+
+            function savePresets() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+            }
+
+            function showScreen(screenId) {
+                Object.values(screens).forEach(s => s.classList.remove('active'));
+                screens[screenId].classList.add('active');
+            }
+
+            function renderPresetList() {
+                presetListEl.innerHTML = '';
+                presets.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'preset-item';
+                    item.dataset.id = p.id;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'name';
+                    nameSpan.textContent = p.name;
+                    const metaSpan = document.createElement('span');
+                    metaSpan.className = 'meta';
+                    const warmup = p.warmup.enabled ? `Разм ${p.warmup.seconds}с` : '—';
+                    const cooldown = p.cooldown.enabled ? `Зам ${p.cooldown.seconds}с` : '—';
+                    metaSpan.textContent = `${p.work.seconds}с / ${p.rest.seconds}с × ${p.rounds} | ${warmup} | ${cooldown}`;
+                    item.appendChild(nameSpan);
+                    item.appendChild(metaSpan);
+                    item.addEventListener('click', () => {
+                        startTimerWithPreset(p.id);
+                    });
+                    presetListEl.appendChild(item);
+                });
+            }
+
+            function startTimerWithPreset(presetId) {
+                const preset = getPresetById(presetId);
+                if (!preset) return;
+                currentPresetId = presetId;
+                initializeTimer(preset);
+                showScreen('timer');
+            }
+
+            function initializeTimer(preset) {
+                stopTimer();
+                timerState.running = false;
+                timerState.paused = false;
+                timerState.phase = 'idle';
+                timerState.round = 0;
+                timerState.totalRounds = preset.rounds;
+                timerState.timeLeft = 0;
+                timerState.totalTimeInPhase = 0;
+                timerState.intervalId = null;
+                timerState.lastTickSecond = -1;
+                updateTimerUI();
+                // Determine first phase
+                if (preset.warmup.enabled) {
+                    setPhase('warmup', preset.warmup.seconds);
+                } else {
+                    startNextRound();
+                }
+            }
+
+            function setPhase(phase, seconds) {
+                timerState.phase = phase;
+                timerState.timeLeft = seconds;
+                timerState.totalTimeInPhase = seconds;
+                timerState.lastTickSecond = -1;
+                updateTimerUI();
+                playPhaseStartSound(phase);
+            }
+
+            function startNextRound() {
+                if (timerState.round >= timerState.totalRounds) {
+                    // after last round, check cooldown
+                    const preset = getPresetById(currentPresetId);
+                    if (preset && preset.cooldown.enabled) {
+                        setPhase('cooldown', preset.cooldown.seconds);
+                    } else {
+                        finishTraining();
+                    }
+                    return;
+                }
+                timerState.round++;
+                const preset = getPresetById(currentPresetId);
+                setPhase('work', preset.work.seconds);
+            }
+
+            function finishTraining() {
+                stopTimer();
+                timerState.phase = 'finished';
+                updateTimerUI();
+                showScreen('finish');
+                const preset = getPresetById(currentPresetId);
+                const totalSeconds = calculateTotalSeconds(preset);
+                finishSummary.textContent = `Общее время: ${formatTime(totalSeconds)} · Раундов: ${preset.rounds}`;
+                releaseWakeLock();
+            }
+
+            function calculateTotalSeconds(preset) {
+                let total = 0;
+                if (preset.warmup.enabled) total += preset.warmup.seconds;
+                total += preset.rounds * (preset.work.seconds + preset.rest.seconds);
+                if (preset.cooldown.enabled) total += preset.cooldown.seconds;
+                return total;
+            }
+
+            function updateTimerUI() {
+                if (timerState.phase === 'finished') {
+                    timerDisplay.textContent = '00:00';
+                    phaseLabel.textContent = 'Завершено';
+                    roundIndicator.textContent = '';
+                    progressFill.style.width = '100%';
+                    return;
+                }
+                timerDisplay.textContent = formatTime(timerState.timeLeft);
+                const phaseNames = {
+                    warmup: 'Разминка',
+                    work: 'Работа',
+                    rest: 'Отдых',
+                    cooldown: 'Заминка',
+                    idle: 'Готово'
+                };
+                phaseLabel.textContent = phaseNames[timerState.phase] || '';
+                if (timerState.phase === 'work' || timerState.phase === 'rest') {
+                    roundIndicator.textContent = `Раунд ${timerState.round} из ${timerState.totalRounds}`;
+                } else {
+                    roundIndicator.textContent = '';
+                }
+                // progress
+                if (timerState.totalTimeInPhase > 0) {
+                    const pct = ((timerState.totalTimeInPhase - timerState.timeLeft) / timerState.totalTimeInPhase) * 100;
+                    progressFill.style.width = pct + '%';
+                } else {
+                    progressFill.style.width = '0%';
+                }
+                // color accent
+                const accentMap = {
+                    warmup: 'var(--accent-warmup)',
+                    work: 'var(--accent-work)',
+                    rest: 'var(--accent-rest)',
+                    cooldown: 'var(--accent-cooldown)',
+                    idle: 'var(--accent-neutral)',
+                    finished: 'var(--accent-neutral)'
+                };
+                timerDisplay.style.color = accentMap[timerState.phase] || 'var(--text)';
+            }
+
+            function startTimer() {
+                if (timerState.running) return;
+                if (timerState.phase === 'finished') return;
+                timerState.running = true;
+                timerState.paused = false;
+                btnStartPause.textContent = 'Пауза';
+                requestWakeLock();
+                timerState.intervalId = setInterval(tick, 1000);
+            }
+
+            function pauseTimer() {
+                if (!timerState.running) return;
+                timerState.running = false;
+                timerState.paused = true;
+                btnStartPause.textContent = 'Старт';
+                clearInterval(timerState.intervalId);
+                timerState.intervalId = null;
+                releaseWakeLock();
+            }
+
+            function stopTimer() {
+                if (timerState.intervalId) {
+                    clearInterval(timerState.intervalId);
+                    timerState.intervalId = null;
+                }
+                timerState.running = false;
+                timerState.paused = false;
+                btnStartPause.textContent = 'Старт';
+                releaseWakeLock();
+            }
+
+            function tick() {
+                if (!timerState.running) return;
+                if (timerState.timeLeft > 0) {
+                    timerState.timeLeft--;
+                    // tick sounds for last 3 seconds
+                    if (timerState.timeLeft <= 3 && timerState.timeLeft > 0) {
+                        playTickSound();
+                    }
+                    updateTimerUI();
+                } else {
+                    // phase complete
+                    handlePhaseComplete();
+                }
+            }
+
+            function handlePhaseComplete() {
+                const preset = getPresetById(currentPresetId);
+                if (!preset) return;
+                if (timerState.phase === 'warmup') {
+                    startNextRound();
+                } else if (timerState.phase === 'work') {
+                    setPhase('rest', preset.rest.seconds);
+                } else if (timerState.phase === 'rest') {
+                    startNextRound();
+                } else if (timerState.phase === 'cooldown') {
+                    finishTraining();
+                }
+            }
+
+            function skipPhase() {
+                if (timerState.phase === 'finished') return;
+                handlePhaseComplete();
+            }
+
+            function resetTimer() {
+                stopTimer();
+                const preset = getPresetById(currentPresetId);
+                if (preset) {
+                    initializeTimer(preset);
+                }
+            }
+
+            // ---------- Sound ----------
+            let audioCtx = null;
+            function ensureAudioContext() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            function playBeep(freq, duration = 0.15, type = 'sine') {
+                if (!timerState.soundEnabled) return;
+                try {
+                    ensureAudioContext();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.value = 0.3;
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            function playPhaseStartSound(phase) {
+                if (!timerState.soundEnabled) return;
+                if (phase === 'work') playBeep(880, 0.2);
+                else if (phase === 'rest') playBeep(660, 0.2);
+                else if (phase === 'warmup') playBeep(520, 0.2);
+                else if (phase === 'cooldown') playBeep(440, 0.2);
+            }
+
+            function playTickSound() {
+                if (!timerState.soundEnabled) return;
+                playBeep(1000, 0.08, 'square');
+            }
+
+            function playFinishSound() {
+                if (!timerState.soundEnabled) return;
+                playBeep(1200, 0.3);
+                setTimeout(() => playBeep(1000, 0.3), 200);
+                setTimeout(() => playBeep(800, 0.3), 400);
+            }
+
+            // ---------- Wake Lock ----------
+            async function requestWakeLock() {
+                if (!('wakeLock' in navigator)) {
+                    timerState.wakeLockSupported = false;
+                    wakeLockWarning.classList.remove('hidden');
+                    return;
+                }
+                timerState.wakeLockSupported = true;
+                wakeLockWarning.classList.add('hidden');
+                try {
+                    timerState.wakeLock = await navigator.wakeLock.request('screen');
+                    timerState.wakeLock.addEventListener('release', () => {
+                        timerState.wakeLock = null;
+                    });
+                } catch (err) {
+                    timerState.wakeLock = null;
+                }
+            }
+
+            function releaseWakeLock() {
+                if (timerState.wakeLock) {
+                    timerState.wakeLock.release().catch(() => {});
+                    timerState.wakeLock = null;
+                }
+            }
+
+            // ---------- Event listeners ----------
+            btnNewPreset.addEventListener('click', () => {
+                editingPresetId = null;
+                editTitle.textContent = 'Новый пресет';
+                presetNameInput.value = '';
+                warmupEnabledCheckbox.checked = false;
+                warmupSecondsInput.value = 30;
+                workSecondsInput.value = 20;
+                restSecondsInput.value = 10;
+                roundsInput.value = 8;
+                cooldownEnabledCheckbox.checked = false;
+                cooldownSecondsInput.value = 30;
+                btnDeletePreset.classList.add('hidden');
+                showScreen('edit');
+            });
+
+            btnImport.addEventListener('click', () => {
+                importFileInput.click();
+            });
+
+            importFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const imported = JSON.parse(ev.target.result);
+                        if (Array.isArray(imported)) {
+                            imported.forEach(p => {
+                                if (!p.id) p.id = generateId();
+                                const existing = presets.find(x => x.name === p.name);
+                                if (existing) {
+                                    if (confirm(`Пресет "${p.name}" уже существует. Заменить?`)) {
+                                        const idx = presets.findIndex(x => x.id === existing.id);
+                                        presets[idx] = p;
+                                    } else {
+                                        p.id = generateId();
+                                        p.name = p.name + ' (копия)';
+                                        presets.push(p);
+                                    }
+                                } else {
+                                    presets.push(p);
+                                }
+                            });
+                        } else if (imported && imported.name) {
+                            const p = imported;
+                            if (!p.id) p.id = generateId();
+                            const existing = presets.find(x => x.name === p.name);
+                            if (existing) {
+                                if (confirm(`Пресет "${p.name}" уже существует. Заменить?`)) {
+                                    const idx = presets.findIndex(x => x.id === existing.id);
+                                    presets[idx] = p;
+                                } else {
+                                    p.id = generateId();
+                                    p.name = p.name + ' (копия)';
+                                    presets.push(p);
+                                }
+                            } else {
+                                presets.push(p);
+                            }
+                        }
+                        savePresets();
+                        renderPresetList();
+                    } catch (err) {
+                        alert('Ошибка импорта');
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            });
+
+            btnExportAll.addEventListener('click', () => {
+                const dataStr = JSON.stringify(presets, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'presets.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            btnSavePreset.addEventListener('click', () => {
+                const name = presetNameInput.value.trim();
+                if (!name) {
+                    alert('Введите название');
+                    return;
+                }
+                const warmupEnabled = warmupEnabledCheckbox.checked;
+                const warmupSeconds = parseInt(warmupSecondsInput.value, 10) || 0;
+                const workSeconds = parseInt(workSecondsInput.value, 10) || 20;
+                const restSeconds = parseInt(restSecondsInput.value, 10) || 10;
+                const rounds = parseInt(roundsInput.value, 10) || 1;
+                const cooldownEnabled = cooldownEnabledCheckbox.checked;
+                const cooldownSeconds = parseInt(cooldownSecondsInput.value, 10) || 0;
+
+                const preset = {
+                    id: editingPresetId || generateId(),
+                    name,
+                    warmup: { enabled: warmupEnabled, seconds: warmupSeconds },
+                    work: { seconds: workSeconds },
+                    rest: { seconds: restSeconds },
+                    rounds,
+                    cooldown: { enabled: cooldownEnabled, seconds: cooldownSeconds }
+                };
+
+                if (editingPresetId) {
+                    const idx = presets.findIndex(p => p.id === editingPresetId);
+                    if (idx !== -1) presets[idx] = preset;
+                } else {
+                    presets.push(preset);
+                }
+                savePresets();
+                renderPresetList();
+                showScreen('presets');
+            });
+
+            btnCancelEdit.addEventListener('click', () => {
+                showScreen('presets');
+            });
+
+            btnExportPreset.addEventListener('click', () => {
+                if (!editingPresetId) return;
+                const preset = getPresetById(editingPresetId);
+                if (!preset) return;
+                const dataStr = JSON.stringify(preset, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${preset.name.replace(/\s+/g, '_')}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            btnDeletePreset.addEventListener('click', () => {
+                if (!editingPresetId) return;
+                if (confirm('Удалить пресет?')) {
+                    presets = presets.filter(p => p.id !== editingPresetId);
+                    savePresets();
+                    renderPresetList();
+                    showScreen('presets');
+                }
+            });
+
+            btnStartPause.addEventListener('click', () => {
+                if (timerState.running) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
+            btnReset.addEventListener('click', resetTimer);
+            btnSkip.addEventListener('click', skipPhase);
+
+            soundToggle.addEventListener('change', (e) => {
+                timerState.soundEnabled = e.target.checked;
+            });
+
+            btnRepeat.addEventListener('click', () => {
+                const preset = getPresetById(currentPresetId);
+                if (preset) {
+                    initializeTimer(preset);
+                    showScreen('timer');
+                }
+            });
+
+            btnToPresets.addEventListener('click', () => {
+                stopTimer();
+                showScreen('presets');
+            });
+
+            // ---------- Init ----------
+            loadPresets();
+            renderPresetList();
+            showScreen('presets');
+        })();
+    </script>
+</body>
+</html>
