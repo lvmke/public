@@ -54,6 +54,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            position: relative;
         }
 
         h1, h2, h3 {
@@ -258,6 +259,33 @@
             text-align: center;
         }
 
+        .edit-corner-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--btn-bg);
+            color: var(--text);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        .edit-corner-btn:hover {
+            background: var(--btn-hover);
+        }
+
+        .edit-corner-btn:active {
+            background: var(--btn-active);
+        }
+
         @media (max-width: 400px) {
             .timer-display {
                 font-size: 4rem;
@@ -325,6 +353,7 @@
 
         <!-- Screen: timer -->
         <div id="screen-timer" class="screen">
+            <button class="edit-corner-btn" id="btn-edit-current" title="Редактировать тренировку">✎</button>
             <div class="phase-label" id="phase-label">Работа</div>
             <div class="timer-display" id="timer-display">00:00</div>
             <div class="round-indicator" id="round-indicator">Раунд 1 из 8</div>
@@ -430,6 +459,7 @@
             const btnReset = document.getElementById('btn-reset');
             const btnSkip = document.getElementById('btn-skip');
             const btnBackToPresets = document.getElementById('btn-back-to-presets');
+            const btnEditCurrent = document.getElementById('btn-edit-current');
             const soundToggle = document.getElementById('sound-toggle');
             const wakeLockWarning = document.getElementById('wake-lock-warning');
 
@@ -921,6 +951,23 @@
             btnBackToPresets.addEventListener('click', () => {
                 stopTimer();
                 showScreen('presets');
+            });
+
+            btnEditCurrent.addEventListener('click', () => {
+                const preset = getPresetById(currentPresetId);
+                if (!preset) return;
+                editingPresetId = preset.id;
+                editTitle.textContent = 'Редактировать пресет';
+                presetNameInput.value = preset.name;
+                warmupEnabledCheckbox.checked = preset.warmup.enabled;
+                warmupSecondsInput.value = preset.warmup.seconds;
+                workSecondsInput.value = preset.work.seconds;
+                restSecondsInput.value = preset.rest.seconds;
+                roundsInput.value = preset.rounds;
+                cooldownEnabledCheckbox.checked = preset.cooldown.enabled;
+                cooldownSecondsInput.value = preset.cooldown.seconds;
+                btnDeletePreset.classList.remove('hidden');
+                showScreen('edit');
             });
 
             soundToggle.addEventListener('change', (e) => {
