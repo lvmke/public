@@ -656,6 +656,12 @@
                 }
                 timerState.round++;
                 const preset = getPresetById(currentPresetId);
+                if (!preset) {
+                    // If preset is missing (e.g., run without saving), use the temporary preset stored in currentPresetId
+                    // We can't proceed without a preset; finish training gracefully
+                    finishTraining();
+                    return;
+                }
                 setPhase('work', preset.work.seconds);
             }
 
@@ -665,8 +671,8 @@
                 updateTimerUI();
                 showScreen('finish');
                 const preset = getPresetById(currentPresetId);
-                const totalSeconds = calculateTotalSeconds(preset);
-                finishSummary.textContent = `Общее время: ${formatTime(totalSeconds)} · Раундов: ${preset.rounds}`;
+                const totalSeconds = preset ? calculateTotalSeconds(preset) : 0;
+                finishSummary.textContent = `Общее время: ${formatTime(totalSeconds)} · Раундов: ${preset ? preset.rounds : 0}`;
                 releaseWakeLock();
             }
 
@@ -763,7 +769,11 @@
 
             function handlePhaseComplete() {
                 const preset = getPresetById(currentPresetId);
-                if (!preset) return;
+                if (!preset) {
+                    // If preset is missing, finish training
+                    finishTraining();
+                    return;
+                }
                 if (timerState.phase === 'warmup') {
                     startNextRound();
                 } else if (timerState.phase === 'work') {
