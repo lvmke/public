@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Спортивный таймер</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --surface:#15181d;
+    --surface-2:#1e232a;
+    --surface-3:#272d36;
+    --border:#2b323c;
+    --text:#f2f4f7;
+    --text-dim:#9aa3af;
+    --accent:#4f8cff;
+    --danger:#ef4444;
+    --success:#22c55e;
+    --c-warmup:#f5a524;
+    --c-work:#ef4444;
+    --c-rest:#22c55e;
+    --c-cooldown:#4f8cff;
+    --c-idle:#6b7280;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body{min-height:100vh; overflow-x:hidden;}
+  button{font-family:inherit;}
+  .app-shell{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+  .screen{display:none;flex-direction:column;min-height:100vh;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
+  .screen.active{display:flex;}
+
+  /* ---------- top bar ---------- */
+  .top-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;gap:8px;flex-shrink:0;
+  }
+  .top-bar h1{font-size:1.05rem;font-weight:600;margin:0;flex:1;text-align:center;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px;}
+  .icon-btn{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;width:42px;height:42px;font-size:1.1rem;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    touch-action:manipulation;flex-shrink:0;
+  }
+  .icon-btn:active{background:var(--surface-3);}
+  .text-btn{
+    background:none;border:none;color:var(--accent);font-size:0.95rem;
+    padding:8px 4px;cursor:pointer;touch-action:manipulation;
+  }
+
+  /* ---------- generic buttons ---------- */
+  .btn{
+    border-radius:12px;border:1px solid var(--border);padding:13px 18px;
+    font-size:1rem;font-weight:600;cursor:pointer;touch-action:manipulation;
+    background:var(--surface-2);color:var(--text);
+  }
+  .btn:active{filter:brightness(1.15);}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+  .btn-secondary{background:var(--surface-2);}
+  .btn-ghost{background:transparent;}
+  .btn-block{width:100%;}
+  .btn-row{display:flex;gap:10px;}
+  .btn-row .btn{flex:1;}
+  .btn:disabled{opacity:0.4;cursor:default;}
+
+  /* ---------- preset list screen ---------- */
+  #screen-presets .content{padding:0 16px 24px;flex:1;}
+  .actions-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .actions-row .btn{flex:1;min-width:120px;}
+  .stopwatch-link{
+    display:flex;align-items:center;gap:10px;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:18px;
+    cursor:pointer;touch-action:manipulation;
+  }
+  .stopwatch-link .swi{font-size:1.4rem;}
+  .stopwatch-link .swt{font-weight:600;}
+  .stopwatch-link .sws{font-size:0.82rem;color:var(--text-dim);}
+  .section-label{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin:18px 0 8px;}
+  .preset-list{display:flex;flex-direction:column;gap:10px;}
+  .preset-item{
+    position:relative;background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:14px 48px 14px 16px;cursor:pointer;touch-action:manipulation;
+  }
+  .preset-item:active{background:var(--surface-2);}
+  .preset-name{font-weight:600;font-size:1.02rem;margin-bottom:4px;}
+  .preset-summary{font-size:0.82rem;color:var(--text-dim);line-height:1.4;}
+  .preset-edit-btn{
+    position:absolute;top:10px;right:10px;width:32px;height:32px;
+    background:var(--surface-3);border:1px solid var(--border);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:0.95rem;
+    color:var(--text-dim);cursor:pointer;touch-action:manipulation;
+  }
+  .preset-edit-btn:active{background:var(--surface-2);color:var(--text);}
+  .empty-note{color:var(--text-dim);font-size:0.9rem;padding:12px 2px;}
+
+  /* ---------- editor screen ---------- */
+  #screen-editor .content{padding:4px 16px 28px;flex:1;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:0.85rem;color:var(--text-dim);margin-bottom:6px;}
+  .field input[type=text], .field input[type=number], .field select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text);border-radius:10px;padding:12px 14px;font-size:1rem;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--accent);}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  .toggle-field{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;margin-bottom:10px;
+  }
+  .toggle-field span{font-size:0.95rem;}
+  .switch{position:relative;width:44px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--surface-3);border-radius:999px;transition:0.15s;cursor:pointer;}
+  .slider::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.15s;}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+  .subfield{margin-top:-2px;margin-bottom:14px;}
+  .subfield.disabled{opacity:0.4;pointer-events:none;}
+  .editor-actions{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  .error-text{color:var(--danger);font-size:0.85rem;min-height:1.2em;margin:2px 0 12px;}
+
+  /* ---------- timer / stopwatch screens ---------- */
+  .phase-screen{flex:1;display:flex;flex-direction:column;transition:background 0.4s ease;}
+  .phase-screen[data-phase="warmup"]{background:radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--c-warmup) 22%, var(--bg)), var(--bg) 70%);}
+  .phase-screen[data-phase="work"]{background:radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--c-work) 26%, var(--bg)), var(--bg) 70%);}
+  .phase-screen[data-phase="rest"]{background:radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--c-rest) 22%, var(--bg)), var(--bg) 70%);}
+  .phase-screen[data-phase="cooldown"]{background:radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--c-cooldown) 22%, var(--bg)), var(--bg) 70%);}
+  .phase-screen[data-phase="idle"]{background:var(--bg);}
+
+  .timer-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:14px;}
+  .phase-label{
+    font-size:1.15rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
+    padding:6px 18px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);
+  }
+  [data-phase="warmup"] .phase-label{color:var(--c-warmup);border-color:var(--c-warmup);}
+  [data-phase="work"] .phase-label{color:var(--c-work);border-color:var(--c-work);}
+  [data-phase="rest"] .phase-label{color:var(--c-rest);border-color:var(--c-rest);}
+  [data-phase="cooldown"] .phase-label{color:var(--c-cooldown);border-color:var(--c-cooldown);}
+
+  .round-indicator{font-size:0.95rem;color:var(--text-dim);}
+  .timer-display{
+    font-size:clamp(4.2rem, 26vw, 9.5rem);font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:1px;
+  }
+  .round-markers{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:320px;}
+  .round-dot{width:9px;height:9px;border-radius:50%;background:var(--surface-3);}
+  .round-dot.done{background:var(--text-dim);}
+  .round-dot.current{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);}
+
+  .overall-progress{width:100%;max-width:360px;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:2px;}
+  .overall-progress-fill{height:100%;background:var(--accent);width:0%;transition:width 0.2s linear;}
+
+  .timer-controls{padding:18px 20px 22px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;}
+  .timer-controls .btn-row .btn{padding:15px 10px;font-size:0.95rem;}
+
+  .warning-banner{
+    margin:0 16px 12px;padding:10px 12px;background:#3a2a12;border:1px solid #6b4a17;
+    color:#fbbf24;font-size:0.8rem;border-radius:10px;line-height:1.4;
+  }
+  .warning-banner.hidden{display:none;}
+
+  /* ---------- finish screen ---------- */
+  #screen-finish .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px;text-align:center;}
+  .finish-emoji{font-size:3.2rem;}
+  .finish-title{font-size:1.4rem;font-weight:700;}
+  .finish-stats{display:flex;gap:26px;}
+  .finish-stat-val{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;}
+  .finish-stat-label{font-size:0.78rem;color:var(--text-dim);margin-top:2px;}
+  .finish-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;margin-top:8px;}
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;
+    justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-overlay.hidden{display:none;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:20px;max-width:360px;width:100%;}
+  .modal p{margin:0 0 18px;font-size:0.98rem;line-height:1.45;}
+  .modal-buttons{display:flex;flex-direction:column;gap:10px;}
+
+  /* ---------- toast ---------- */
+  #toast-host{position:fixed;left:0;right:0;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:60;pointer-events:none;}
+  .toast{background:var(--surface-3);border:1px solid var(--border);color:var(--text);
+    padding:10px 16px;border-radius:999px;font-size:0.85rem;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+    max-width:85%;text-align:center;animation:toast-in 0.15s ease;}
+  @keyframes toast-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ===================== Screen 1: Preset list ===================== -->
+  <section id="screen-presets" class="screen active">
+    <div class="top-bar">
+      <div style="width:42px;"></div>
+      <h1>Спортивный таймер</h1>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="content">
+      <div class="stopwatch-link" id="btn-open-stopwatch">
+        <div class="swi">⏱️</div>
+        <div>
+          <div class="swt">Секундомер</div>
+          <div class="sws">Отсчёт времени вверх</div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" id="btn-new-preset">+ Создать новый</button>
+        <button class="btn btn-secondary" id="btn-import">Импортировать</button>
+        <button class="btn btn-secondary" id="btn-export-all">Экспорт всех</button>
+      </div>
+
+      <div class="section-label">Звук</div>
+      <div class="field">
+        <label for="sound-profile-select">Тип сигнала</label>
+        <select id="sound-profile-select"></select>
+      </div>
+
+      <div class="section-label">Пресеты</div>
+      <div class="preset-list" id="preset-list"></div>
+    </div>
+  </section>
+
+  <!-- ===================== Screen 2: Editor ===================== -->
+  <section id="screen-editor" class="screen">
+    <div class="top-bar">
+      <button class="icon-btn" id="btn-editor-cancel-top">✕</button>
+      <h1 id="editor-title">Новый пресет</h1>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="content">
+      <div class="field">
+        <label for="f-name">Название</label>
+        <input type="text" id="f-name" placeholder="Например, Утренний HIIT">
+      </div>
+
+      <div class="toggle-field">
+        <span>Разминка</span>
+        <label class="switch">
+          <input type="checkbox" id="f-warmup-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field subfield" id="f-warmup-sub">
+        <label for="f-warmup-seconds">Длительность разминки, сек</label>
+        <input type="number" id="f-warmup-seconds" min="0" step="5" value="30">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="f-work">Работа, сек</label>
+          <input type="number" id="f-work" min="1" step="5" value="30">
+        </div>
+        <div class="field">
+          <label for="f-rest">Отдых, сек</label>
+          <input type="number" id="f-rest" min="0" step="5" value="15">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-rounds">Количество раундов</label>
+        <input type="number" id="f-rounds" min="1" step="1" value="8">
+      </div>
+
+      <div class="toggle-field">
+        <span>Заминка</span>
+        <label class="switch">
+          <input type="checkbox" id="f-cooldown-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field subfield" id="f-cooldown-sub">
+        <label for="f-cooldown-seconds">Длительность заминки, сек</label>
+        <input type="number" id="f-cooldown-seconds" min="0" step="5" value="30">
+      </div>
+
+      <div class="error-text" id="editor-error"></div>
+
+      <div class="editor-actions">
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-save">Сохранить</button>
+          <button class="btn btn-secondary" id="btn-run">Запустить</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-cancel">Отмена</button>
+          <button class="btn btn-secondary hidden" id="btn-export">Экспортировать</button>
+        </div>
+        <button class="btn btn-danger hidden" id="btn-delete">Удалить пресет</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Screen 3: Timer ===================== -->
+  <section id="screen-timer" class="screen">
+    <div class="phase-screen" data-phase="idle" id="phase-screen">
+      <div class="top-bar">
+        <button class="icon-btn" id="btn-timer-back">←</button>
+        <h1 id="timer-title">Тренировка</h1>
+        <button class="icon-btn" id="btn-sound">🔊</button>
+      </div>
+      <div class="warning-banner hidden" id="timer-wakelock-warning">
+        Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть во время тренировки.
+      </div>
+      <div class="timer-body">
+        <div class="phase-label" id="phase-label">Готово</div>
+        <div class="round-indicator" id="round-indicator"></div>
+        <div class="timer-display" id="timer-display">00:00</div>
+        <div class="round-markers" id="round-markers"></div>
+        <div class="overall-progress"><div class="overall-progress-fill" id="overall-progress-fill"></div></div>
+      </div>
+      <div class="timer-controls">
+        <button class="btn btn-primary btn-block" id="btn-start-pause">Старт</button>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-reset">Сброс</button>
+          <button class="btn btn-secondary" id="btn-skip">Пропустить фазу</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Screen 4: Finish ===================== -->
+  <section id="screen-finish" class="screen">
+    <div class="top-bar">
+      <div style="width:42px;"></div>
+      <h1>Тренировка завершена</h1>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="content">
+      <div class="finish-emoji">🎉</div>
+      <div class="finish-title" id="finish-preset-name">Отлично!</div>
+      <div class="finish-stats">
+        <div>
+          <div class="finish-stat-val" id="finish-total-time">00:00</div>
+          <div class="finish-stat-label">Общее время</div>
+        </div>
+        <div>
+          <div class="finish-stat-val" id="finish-rounds">0</div>
+          <div class="finish-stat-label">Раундов</div>
+        </div>
+      </div>
+      <div class="finish-actions">
+        <button class="btn btn-primary" id="btn-finish-repeat">Повторить</button>
+        <button class="btn btn-secondary" id="btn-finish-to-presets">К пресетам</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Screen 5: Stopwatch ===================== -->
+  <section id="screen-stopwatch" class="screen">
+    <div class="phase-screen" data-phase="idle">
+      <div class="top-bar">
+        <button class="icon-btn" id="btn-sw-back">←</button>
+        <h1>Секундомер</h1>
+        <div style="width:42px;"></div>
+      </div>
+      <div class="warning-banner hidden" id="sw-wakelock-warning">
+        Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть.
+      </div>
+      <div class="timer-body">
+        <div class="timer-display" id="sw-display">00:00</div>
+      </div>
+      <div class="timer-controls">
+        <button class="btn btn-primary btn-block" id="btn-sw-start-pause">Старт</button>
+        <button class="btn btn-secondary btn-block" id="btn-sw-reset">Сброс</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <p id="modal-message"></p>
+    <div class="modal-buttons" id="modal-buttons"></div>
+  </div>
+</div>
+
+<div id="toast-host"></div>
+<input type="file" id="import-file-input" accept="application/json" class="hidden">
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     Built-in presets
+  ============================================================ */
+  var BUILTIN_PRESETS = [
+    { id:"tabata-classic",        name:"Табата классика",         warmup:{enabled:false,seconds:0},  work:{seconds:20},  rest:{seconds:10}, rounds:8,  cooldown:{enabled:false,seconds:0} },
+    { id:"hiit-beginner",         name:"HIIT новичок",            warmup:{enabled:true, seconds:60}, work:{seconds:30},  rest:{seconds:30}, rounds:6,  cooldown:{enabled:false,seconds:0} },
+    { id:"hiit-advanced",         name:"HIIT продвинутый",        warmup:{enabled:true, seconds:60}, work:{seconds:40},  rest:{seconds:20}, rounds:10, cooldown:{enabled:true, seconds:60} },
+    { id:"strength-sets",         name:"Силовые подходы",         warmup:{enabled:false,seconds:0},  work:{seconds:45},  rest:{seconds:90}, rounds:5,  cooldown:{enabled:false,seconds:0} },
+    { id:"boxing-rounds",         name:"Бокс — раунды",           warmup:{enabled:false,seconds:0},  work:{seconds:180}, rest:{seconds:60}, rounds:3,  cooldown:{enabled:false,seconds:0} },
+    { id:"emom-40-20",            name:"EMOM 40/20",              warmup:{enabled:true, seconds:10}, work:{seconds:40},  rest:{seconds:20}, rounds:10, cooldown:{enabled:true, seconds:10} },
+    { id:"stretching-mobility",   name:"Растяжка/мобилити",       warmup:{enabled:false,seconds:0},  work:{seconds:60},  rest:{seconds:15}, rounds:6,  cooldown:{enabled:false,seconds:0} },
+    { id:"sprints",               name:"Спринты",                 warmup:{enabled:true, seconds:60}, work:{seconds:15},  rest:{seconds:45}, rounds:10, cooldown:{enabled:false,seconds:0} },
+    { id:"plyometrics",           name:"Плиометрика",             warmup:{enabled:true, seconds:60}, work:{seconds:20},  rest:{seconds:40}, rounds:8,  cooldown:{enabled:true, seconds:60} },
+    { id:"breathing-exercises",   name:"Дыхательные упражнения",  warmup:{enabled:false,seconds:0},  work:{seconds:60},  rest:{seconds:30}, rounds:4,  cooldown:{enabled:false,seconds:0} }
+  ];
+  var BUILTIN_IDS = new Set(BUILTIN_PRESETS.map(function(p){ return p.id; }));
+
+  var STORAGE_KEY_PRESETS = "sport_timer_presets_v1";
+  var STORAGE_KEY_SOUND = "sport_timer_sound_enabled_v1";
+  var STORAGE_KEY_SOUND_PROFILE = "sport_timer_sound_profile_v1";
+
+  /* ============================================================
+     Storage helpers
+  ============================================================ */
+  function loadOverrides(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_PRESETS);
+      return raw ? JSON.parse(raw) : {};
+    } catch(e){ return {}; }
+  }
+  function saveOverrides(obj){
+    try { localStorage.setItem(STORAGE_KEY_PRESETS, JSON.stringify(obj)); } catch(e){}
+  }
+  function getEffectivePresets(){
+    var overrides = loadOverrides();
+    var list = [];
+    BUILTIN_PRESETS.forEach(function(bp){
+      var ov = overrides[bp.id];
+      if (ov && ov.deleted) return;
+      list.push(Object.assign({}, ov || bp, { builtin:true }));
+    });
+    Object.keys(overrides).forEach(function(id){
+      if (BUILTIN_IDS.has(id)) return;
+      var p = overrides[id];
+      if (p && p.deleted) return;
+      list.push(Object.assign({}, p, { builtin:false }));
+    });
+    return list;
+  }
+  function findPresetById(id){
+    return getEffectivePresets().find(function(p){ return p.id === id; }) || null;
+  }
+  function upsertPreset(preset){
+    var s = loadOverrides();
+    s[preset.id] = preset;
+    saveOverrides(s);
+  }
+  function deletePresetById(id){
+    var s = loadOverrides();
+    if (BUILTIN_IDS.has(id)) s[id] = { deleted:true };
+    else delete s[id];
+    saveOverrides(s);
+  }
+  function generateId(){
+    return "user-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,7);
+  }
+
+  /* ============================================================
+     Small utilities
+  ============================================================ */
+  function $(id){ return document.getElementById(id); }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function formatTime(totalSeconds){
+    totalSeconds = Math.max(0, Math.round(totalSeconds));
+    var h = Math.floor(totalSeconds/3600);
+    var m = Math.floor((totalSeconds%3600)/60);
+    var s = totalSeconds%60;
+    return h>0 ? (h+":"+pad2(m)+":"+pad2(s)) : (pad2(m)+":"+pad2(s));
+  }
+  function showScreen(name){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    $("screen-"+name).classList.add("active");
+  }
+  function presetSummary(p){
+    var parts = [];
+    if (p.warmup && p.warmup.enabled) parts.push("разминка " + p.warmup.seconds + "с");
+    parts.push(p.rounds + "× (работа " + p.work.seconds + "с / отдых " + p.rest.seconds + "с)");
+    if (p.cooldown && p.cooldown.enabled) parts.push("заминка " + p.cooldown.seconds + "с");
+    return parts.join(" · ");
+  }
+  function totalPresetSeconds(p){
+    var t = 0;
+    if (p.warmup && p.warmup.enabled) t += p.warmup.seconds;
+    t += p.rounds * (p.work.seconds + p.rest.seconds);
+    if (p.cooldown && p.cooldown.enabled) t += p.cooldown.seconds;
+    return t;
+  }
+  function downloadJSON(data, filename){
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  function slugify(name){
+    var s = (name||"preset").toLowerCase().trim().replace(/[^a-z0-9а-яё]+/gi, "-").replace(/^-+|-+$/g,"");
+    return s || "preset";
+  }
+
+  /* ============================================================
+     Toasts
+  ============================================================ */
+  function showToast(msg){
+    var host = $("toast-host");
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = msg;
+    host.appendChild(el);
+    setTimeout(function(){
+      el.style.transition = "opacity 0.2s";
+      el.style.opacity = "0";
+      setTimeout(function(){ el.remove(); }, 220);
+    }, 2600);
+  }
+
+  /* ============================================================
+     Modal (returns a Promise resolving to the chosen value)
+  ============================================================ */
+  function showModal(message, buttons){
+    return new Promise(function(resolve){
+      var overlay = $("modal-overlay");
+      $("modal-message").textContent = message;
+      var btnHost = $("modal-buttons");
+      btnHost.innerHTML = "";
+      buttons.forEach(function(b){
+        var btn = document.createElement("button");
+        btn.textContent = b.label;
+        btn.className = "btn " + (b.variant ? ("btn-"+b.variant) : "btn-secondary");
+        btn.onclick = function(){
+          overlay.classList.add("hidden");
+          resolve(b.value);
+        };
+        btnHost.appendChild(btn);
+      });
+      overlay.classList.remove("hidden");
+    });
+  }
+
+  /* ============================================================
+     Sound engine
+  ============================================================ */
+  var soundEnabled = true;
+  try {
+    var storedSound = localStorage.getItem(STORAGE_KEY_SOUND);
+    if (storedSound !== null) soundEnabled = storedSound === "1";
+  } catch(e){}
+
+  // Five selectable sound profiles. "classic" reproduces the original (quiet) beeps;
+  // the rest use different waveforms/pitches and are noticeably louder.
+  var SOUND_PROFILES = [
+    { id:"classic", name:"Стандартный — тихий", type:"sine",     volMul:1.0, freqMul:1.00 },
+    { id:"loud",    name:"Громкий",             type:"sine",     volMul:2.2, freqMul:1.00 },
+    { id:"sharp",   name:"Чёткий (резкий)",     type:"square",   volMul:1.7, freqMul:1.12 },
+    { id:"electro", name:"Электро",             type:"sawtooth", volMul:1.8, freqMul:0.92 },
+    { id:"power",   name:"Мощный (низкий)",     type:"triangle", volMul:2.4, freqMul:0.72 }
+  ];
+  var soundProfileIndex = 0;
+  try {
+    var storedProfile = localStorage.getItem(STORAGE_KEY_SOUND_PROFILE);
+    var idx = storedProfile !== null ? parseInt(storedProfile, 10) : 0;
+    if (Number.isInteger(idx) && idx >= 0 && idx < SOUND_PROFILES.length) soundProfileIndex = idx;
+  } catch(e){}
+
+  var audioCtx = null;
+  function ensureAudioCtx(){
+    if (!audioCtx){
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+  function beep(freq, durationMs, baseVolume){
+    if (!soundEnabled) return;
+    var ctx = ensureAudioCtx();
+    if (!ctx) return;
+    var profile = SOUND_PROFILES[soundProfileIndex];
+    baseVolume = baseVolume === undefined ? 0.3 : baseVolume;
+    var volume = Math.min(1, baseVolume * profile.volMul);
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = profile.type;
+    osc.frequency.value = freq * profile.freqMul;
+    var now = ctx.currentTime;
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + durationMs/1000);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + durationMs/1000 + 0.03);
+  }
+  function playPhaseStartSound(type){
+    if (type === "work") beep(880, 220, 0.32);
+    else if (type === "rest") beep(440, 220, 0.28);
+    else beep(660, 200, 0.28); // warmup / cooldown
+  }
+  function playTick(){ beep(1200, 70, 0.18); }
+  function playFinish(){
+    beep(523, 150, 0.3); setTimeout(function(){ beep(659,150,0.3); }, 170);
+    setTimeout(function(){ beep(784,320,0.3); }, 340);
+  }
+  function updateSoundIcon(){ $("btn-sound").textContent = soundEnabled ? "🔊" : "🔇"; }
+  $("btn-sound").addEventListener("click", function(){
+    soundEnabled = !soundEnabled;
+    try { localStorage.setItem(STORAGE_KEY_SOUND, soundEnabled ? "1" : "0"); } catch(e){}
+    updateSoundIcon();
+  });
+  updateSoundIcon();
+
+  var soundProfileSelect = $("sound-profile-select");
+  SOUND_PROFILES.forEach(function(profile, i){
+    var opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = profile.name;
+    soundProfileSelect.appendChild(opt);
+  });
+  soundProfileSelect.value = String(soundProfileIndex);
+  soundProfileSelect.addEventListener("change", function(){
+    soundProfileIndex = parseInt(soundProfileSelect.value, 10) || 0;
+    try { localStorage.setItem(STORAGE_KEY_SOUND_PROFILE, String(soundProfileIndex)); } catch(e){}
+    var wasEnabled = soundEnabled;
+    soundEnabled = true;
+    beep(880, 220, 0.32);
+    soundEnabled = wasEnabled;
+  });
+
+  /* ============================================================
+     Wake Lock
+  ============================================================ */
+  var wakeLockSupported = "wakeLock" in navigator;
+  var wakeLockSentinel = null;
+  async function requestWakeLock(){
+    if (!wakeLockSupported) return;
+    try {
+      wakeLockSentinel = await navigator.wakeLock.request("screen");
+      wakeLockSentinel.addEventListener("release", function(){ wakeLockSentinel = null; });
+    } catch(e){ /* ignore — e.g. tab not visible */ }
+  }
+  function releaseWakeLock(){
+    if (wakeLockSentinel){
+      wakeLockSentinel.release().catch(function(){});
+      wakeLockSentinel = null;
+    }
+  }
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible"){
+      if (timerState === "running" || swRunning) requestWakeLock();
+    }
+  });
+  if (!wakeLockSupported){
+    $("timer-wakelock-warning").classList.remove("hidden");
+    $("sw-wakelock-warning").classList.remove("hidden");
+  }
+
+  /* ============================================================
+     Preset list screen
+  ============================================================ */
+  function renderPresetList(){
+    var host = $("preset-list");
+    host.innerHTML = "";
+    var presets = getEffectivePresets();
+    if (!presets.length){
+      var empty = document.createElement("div");
+      empty.className = "empty-note";
+      empty.textContent = "Пока нет ни одного пресета.";
+      host.appendChild(empty);
+      return;
+    }
+    presets.forEach(function(p){
+      var item = document.createElement("div");
+      item.className = "preset-item";
+
+      var name = document.createElement("div");
+      name.className = "preset-name";
+      name.textContent = p.name;
+
+      var summary = document.createElement("div");
+      summary.className = "preset-summary";
+      summary.textContent = presetSummary(p);
+
+      item.appendChild(name);
+      item.appendChild(summary);
+
+      var editBtn = document.createElement("button");
+      editBtn.className = "preset-edit-btn";
+      editBtn.textContent = "✎";
+      editBtn.setAttribute("aria-label", "Редактировать пресет");
+      editBtn.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        openEditor(p.id);
+      });
+
+      item.appendChild(editBtn);
+      item.addEventListener("click", function(){ startTimerScreen(p); });
+
+      host.appendChild(item);
+    });
+  }
+
+  $("btn-open-stopwatch").addEventListener("click", function(){ openStopwatch(); });
+  $("btn-new-preset").addEventListener("click", function(){ openEditor(null); });
+  $("btn-export-all").addEventListener("click", function(){
+    var list = getEffectivePresets().map(function(p){
+      return { id:p.id, name:p.name, warmup:p.warmup, work:p.work, rest:p.rest, rounds:p.rounds, cooldown:p.cooldown };
+    });
+    if (!list.length){ showToast("Нет пресетов для экспорта"); return; }
+    downloadJSON(list, "presets-all.json");
+  });
+  $("btn-import").addEventListener("click", function(){ $("import-file-input").click(); });
+
+  /* ============================================================
+     Import
+  ============================================================ */
+  function normalizeImportedPreset(raw){
+    if (!raw || typeof raw !== "object") return null;
+    var name = String(raw.name || "").trim();
+    if (!name) return null;
+    var rounds = parseInt(raw.rounds, 10);
+    var work = raw.work ? parseInt(raw.work.seconds, 10) : NaN;
+    if (!Number.isFinite(rounds) || rounds < 1 || !Number.isFinite(work) || work < 1) return null;
+    var restRaw = raw.rest ? parseInt(raw.rest.seconds, 10) : 0;
+    var rest = Number.isFinite(restRaw) && restRaw >= 0 ? restRaw : 0;
+    var warmupEnabled = !!(raw.warmup && raw.warmup.enabled);
+    var warmupSecondsRaw = raw.warmup ? parseInt(raw.warmup.seconds, 10) : 0;
+    var warmupSeconds = Number.isFinite(warmupSecondsRaw) ? Math.max(0, warmupSecondsRaw) : 0;
+    var cooldownEnabled = !!(raw.cooldown && raw.cooldown.enabled);
+    var cooldownSecondsRaw = raw.cooldown ? parseInt(raw.cooldown.seconds, 10) : 0;
+    var cooldownSeconds = Number.isFinite(cooldownSecondsRaw) ? Math.max(0, cooldownSecondsRaw) : 0;
+    return {
+      id: (typeof raw.id === "string" && raw.id) ? raw.id : undefined,
+      name: name,
+      warmup: { enabled: warmupEnabled, seconds: warmupSeconds },
+      work: { seconds: work },
+      rest: { seconds: rest },
+      rounds: rounds,
+      cooldown: { enabled: cooldownEnabled, seconds: cooldownSeconds }
+    };
+  }
+
+  $("import-file-input").addEventListener("change", async function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    try {
+      var text = await file.text();
+      var data = JSON.parse(text);
+      var items = Array.isArray(data) ? data : (data && Array.isArray(data.presets) ? data.presets : [data]);
+      items = items.filter(function(x){ return x && typeof x === "object"; });
+      if (!items.length){ showToast("Файл не содержит пресетов"); return; }
+
+      var imported = 0, skipped = 0;
+      for (var i=0; i<items.length; i++){
+        var normalized = normalizeImportedPreset(items[i]);
+        if (!normalized){ skipped++; continue; }
+
+        var existing = getEffectivePresets().find(function(p){
+          return p.name.trim().toLowerCase() === normalized.name.trim().toLowerCase();
+        });
+
+        if (existing){
+          var choice = await showModal(
+            "Пресет «" + normalized.name + "» уже существует. Что сделать?",
+            [
+              { label:"Пропустить", value:"skip" },
+              { label:"Добавить копию", value:"copy" },
+              { label:"Заменить", value:"replace", variant:"primary" }
+            ]
+          );
+          if (choice === "skip"){ skipped++; continue; }
+          if (choice === "replace"){ normalized.id = existing.id; }
+          if (choice === "copy"){ normalized.id = generateId(); normalized.name = normalized.name + " (копия)"; }
+        } else {
+          var idTaken = normalized.id && getEffectivePresets().some(function(p){ return p.id === normalized.id; });
+          if (!normalized.id || idTaken) normalized.id = generateId();
+        }
+
+        upsertPreset(normalized);
+        imported++;
+      }
+      renderPresetList();
+      showToast("Импортировано: " + imported + (skipped ? (", пропущено: " + skipped) : ""));
+    } catch(err){
+      showToast("Не удалось прочитать файл: некорректный JSON");
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  /* ============================================================
+     Editor screen
+  ============================================================ */
+  var editingId = null;
+
+  function syncSubfields(){
+    $("f-warmup-sub").classList.toggle("disabled", !$("f-warmup-enabled").checked);
+    $("f-cooldown-sub").classList.toggle("disabled", !$("f-cooldown-enabled").checked);
+  }
+  $("f-warmup-enabled").addEventListener("change", syncSubfields);
+  $("f-cooldown-enabled").addEventListener("change", syncSubfields);
+
+  function openEditor(id){
+    editingId = id;
+    var p = id ? findPresetById(id) : null;
+    $("editor-error").textContent = "";
+    $("editor-title").textContent = id ? "Редактирование пресета" : "Новый пресет";
+    $("f-name").value = p ? p.name : "tmp";
+    $("f-warmup-enabled").checked = !!(p && p.warmup && p.warmup.enabled);
+    $("f-warmup-seconds").value = (p && p.warmup) ? p.warmup.seconds : 30;
+    $("f-work").value = p ? p.work.seconds : 30;
+    $("f-rest").value = p ? p.rest.seconds : 15;
+    $("f-rounds").value = p ? p.rounds : 8;
+    $("f-cooldown-enabled").checked = !!(p && p.cooldown && p.cooldown.enabled);
+    $("f-cooldown-seconds").value = (p && p.cooldown) ? p.cooldown.seconds : 30;
+    syncSubfields();
+    $("btn-delete").classList.toggle("hidden", !id);
+    $("btn-export").classList.toggle("hidden", !id);
+    showScreen("editor");
+  }
+
+  function readEditorForm(){
+    var name = $("f-name").value.trim();
+    if (!name) return { ok:false, error:"Введите название пресета" };
+    var rounds = parseInt($("f-rounds").value, 10);
+    if (!Number.isFinite(rounds) || rounds < 1) return { ok:false, error:"Количество раундов должно быть не меньше 1" };
+    var work = parseInt($("f-work").value, 10);
+    if (!Number.isFinite(work) || work < 1) return { ok:false, error:"Длительность работы должна быть не меньше 1 секунды" };
+    var rest = parseInt($("f-rest").value, 10);
+    if (!Number.isFinite(rest) || rest < 0) return { ok:false, error:"Длительность отдыха не может быть отрицательной" };
+    var warmupEnabled = $("f-warmup-enabled").checked;
+    var warmupSeconds = parseInt($("f-warmup-seconds").value, 10);
+    if (warmupEnabled && (!Number.isFinite(warmupSeconds) || warmupSeconds < 1)) return { ok:false, error:"Укажите длительность разминки" };
+    var cooldownEnabled = $("f-cooldown-enabled").checked;
+    var cooldownSeconds = parseInt($("f-cooldown-seconds").value, 10);
+    if (cooldownEnabled && (!Number.isFinite(cooldownSeconds) || cooldownSeconds < 1)) return { ok:false, error:"Укажите длительность заминки" };
+    return {
+      ok:true,
+      preset:{
+        name:name,
+        warmup:{ enabled:warmupEnabled, seconds: Number.isFinite(warmupSeconds) ? warmupSeconds : 0 },
+        work:{ seconds:work },
+        rest:{ seconds:rest },
+        rounds:rounds,
+        cooldown:{ enabled:cooldownEnabled, seconds: Number.isFinite(cooldownSeconds) ? cooldownSeconds : 0 }
+      }
+    };
+  }
+
+  $("btn-save").addEventListener("click", function(){
+    var r = readEditorForm();
+    if (!r.ok){ $("editor-error").textContent = r.error; return; }
+    var id = editingId || generateId();
+    var preset = Object.assign({ id:id }, r.preset);
+    upsertPreset(preset);
+    editingId = null;
+    startTimerScreen(preset);
+  });
+
+  $("btn-run").addEventListener("click", function(){
+    var r = readEditorForm();
+    if (!r.ok){ $("editor-error").textContent = r.error; return; }
+    var preset = Object.assign({ id:"temp-" + Date.now() }, r.preset);
+    editingId = null;
+    startTimerScreen(preset);
+  });
+
+  function backToPresets(){
+    editingId = null;
+    renderPresetList();
+    showScreen("presets");
+  }
+  $("btn-cancel").addEventListener("click", backToPresets);
+  $("btn-editor-cancel-top").addEventListener("click", backToPresets);
+
+  $("btn-export").addEventListener("click", function(){
+    var r = readEditorForm();
+    if (!r.ok){ $("editor-error").textContent = r.error; return; }
+    var preset = Object.assign({ id: editingId || generateId() }, r.preset);
+    downloadJSON([preset], slugify(preset.name) + ".json");
+  });
+
+  $("btn-delete").addEventListener("click", async function(){
+    if (!editingId) return;
+    var p = findPresetById(editingId);
+    var name = p ? p.name : "этот пресет";
+    var choice = await showModal("Удалить пресет «" + name + "»?", [
+      { label:"Отмена", value:"cancel" },
+      { label:"Удалить", value:"delete", variant:"danger" }
+    ]);
+    if (choice !== "delete") return;
+    deletePresetById(editingId);
+    editingId = null;
+    renderPresetList();
+    showScreen("presets");
+  });
+
+  /* ============================================================
+     Timer engine
+  ============================================================ */
+  var PHASE_LABELS = { warmup:"Разминка", work:"Работа", rest:"Отдых", cooldown:"Заминка" };
+
+  var currentPreset = null;
+  var phases = [];
+  var phaseIndex = 0;
+  var phaseRemainingMs = 0;
+  var phaseEndTimestamp = 0;
+  var timerState = "ready"; // ready | running | paused | finished
+  var tickIntervalId = null;
+  var lastTickSecond = null;
+
+  function buildPhases(p){
+    var list = [];
+    if (p.warmup && p.warmup.enabled && p.warmup.seconds > 0) list.push({ type:"warmup", duration:p.warmup.seconds });
+    for (var r=1; r<=p.rounds; r++){
+      list.push({ type:"work", duration:p.work.seconds, round:r });
+      if (p.rest.seconds > 0) list.push({ type:"rest", duration:p.rest.seconds, round:r });
+    }
+    if (p.cooldown && p.cooldown.enabled && p.cooldown.seconds > 0) list.push({ type:"cooldown", duration:p.cooldown.seconds });
+    return list;
+  }
+
+  function startTimerScreen(preset){
+    currentPreset = preset;
+    phases = buildPhases(preset);
+    phaseIndex = 0;
+    phaseRemainingMs = phases.length ? phases[0].duration * 1000 : 0;
+    timerState = "ready";
+    lastTickSecond = null;
+    if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
+    $("timer-title").textContent = preset.name || "Тренировка";
+    showScreen("timer");
+    updateTimerDisplay();
+  }
+
+  function totalPlannedSecondsFromPhases(){
+    return phases.reduce(function(a,p){ return a + p.duration; }, 0);
+  }
+  function elapsedPlannedSeconds(){
+    var elapsed = 0;
+    for (var i=0; i<phaseIndex; i++) elapsed += phases[i].duration;
+    var cur = phases[phaseIndex];
+    if (cur) elapsed += (cur.duration - phaseRemainingMs/1000);
+    return elapsed;
+  }
+
+  function updateTimerDisplay(){
+    var phaseScreen = $("phase-screen");
+    var cur = phases[phaseIndex];
+
+    if (!cur){
+      phaseScreen.setAttribute("data-phase", "idle");
+      $("phase-label").textContent = "Готово";
+      $("round-indicator").textContent = "";
+      $("timer-display").textContent = "00:00";
+      $("round-markers").innerHTML = "";
+      $("overall-progress-fill").style.width = "0%";
+      return;
+    }
+
+    phaseScreen.setAttribute("data-phase", cur.type);
+    $("phase-label").textContent = PHASE_LABELS[cur.type] || cur.type;
+    $("round-indicator").textContent = (cur.type === "work" || cur.type === "rest")
+      ? ("Раунд " + cur.round + " из " + currentPreset.rounds) : "";
+    $("timer-display").textContent = formatTime(Math.ceil(phaseRemainingMs/1000));
+
+    // round markers
+    var markersHost = $("round-markers");
+    markersHost.innerHTML = "";
+    var rounds = currentPreset.rounds;
+    var currentRound = cur.round || null;
+    for (var i=1; i<=rounds; i++){
+      var dot = document.createElement("span");
+      dot.className = "round-dot";
+      if (cur.type === "cooldown" || (currentRound && i < currentRound)) dot.classList.add("done");
+      else if (currentRound && i === currentRound) dot.classList.add("current");
+      markersHost.appendChild(dot);
+    }
+
+    var total = totalPlannedSecondsFromPhases();
+    var pct = total > 0 ? (elapsedPlannedSeconds() / total * 100) : 0;
+    $("overall-progress-fill").style.width = Math.min(100, Math.max(0, pct)) + "%";
+
+    var btn = $("btn-start-pause");
+    if (timerState === "running") btn.textContent = "Пауза";
+    else if (timerState === "paused") btn.textContent = "Продолжить";
+    else btn.textContent = "Старт";
+  }
+
+  function goToNextPhase(){
+    phaseIndex++;
+    lastTickSecond = null;
+    if (phaseIndex >= phases.length){
+      finishTraining();
+      return;
+    }
+    var ph = phases[phaseIndex];
+    phaseRemainingMs = ph.duration * 1000;
+    playPhaseStartSound(ph.type);
+    if (timerState === "running") phaseEndTimestamp = Date.now() + phaseRemainingMs;
+    updateTimerDisplay();
+  }
+
+  function tickLoop(){
+    var now = Date.now();
+    var remainingMs = phaseEndTimestamp - now;
+    if (remainingMs <= 0){ goToNextPhase(); return; }
+    phaseRemainingMs = remainingMs;
+    var secondsLeft = Math.ceil(remainingMs/1000);
+    if (secondsLeft <= 3 && secondsLeft >= 1 && secondsLeft !== lastTickSecond){
+      playTick();
+      lastTickSecond = secondsLeft;
+    }
+    updateTimerDisplay();
+  }
+
+  function onStartPauseClick(){
+    if (timerState === "finished" || !phases.length) return;
+    if (timerState === "ready" || timerState === "paused"){
+      if (timerState === "ready") playPhaseStartSound(phases[phaseIndex].type);
+      phaseEndTimestamp = Date.now() + phaseRemainingMs;
+      timerState = "running";
+      if (tickIntervalId) clearInterval(tickIntervalId);
+      tickIntervalId = setInterval(tickLoop, 200);
+      requestWakeLock();
+    } else if (timerState === "running"){
+      phaseRemainingMs = phaseEndTimestamp - Date.now();
+      clearInterval(tickIntervalId);
+      tickIntervalId = null;
+      timerState = "paused";
+    }
+    updateTimerDisplay();
+  }
+
+  function onResetClick(){
+    if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
+    phaseIndex = 0;
+    phaseRemainingMs = phases.length ? phases[0].duration * 1000 : 0;
+    timerState = "ready";
+    lastTickSecond = null;
+    releaseWakeLock();
+    updateTimerDisplay();
+  }
+
+  function onSkipClick(){
+    if (timerState === "finished" || !phases.length) return;
+    var wasRunning = timerState === "running";
+    if (wasRunning) clearInterval(tickIntervalId);
+    goToNextPhase();
+    if (timerState === "finished") return;
+    if (wasRunning){
+      phaseEndTimestamp = Date.now() + phaseRemainingMs;
+      tickIntervalId = setInterval(tickLoop, 200);
+    }
+  }
+
+  function finishTraining(){
+    if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
+    timerState = "finished";
+    releaseWakeLock();
+    playFinish();
+    $("finish-preset-name").textContent = currentPreset && currentPreset.name ? currentPreset.name : "Тренировка";
+    $("finish-total-time").textContent = formatTime(totalPresetSeconds(currentPreset));
+    $("finish-rounds").textContent = currentPreset.rounds;
+    showScreen("finish");
+  }
+
+  function backFromTimer(){
+    if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
+    timerState = "ready";
+    releaseWakeLock();
+    renderPresetList();
+    showScreen("presets");
+  }
+
+  $("btn-start-pause").addEventListener("click", onStartPauseClick);
+  $("btn-reset").addEventListener("click", onResetClick);
+  $("btn-skip").addEventListener("click", onSkipClick);
+  $("btn-timer-back").addEventListener("click", backFromTimer);
+
+  $("btn-finish-repeat").addEventListener("click", function(){ startTimerScreen(currentPreset); });
+  $("btn-finish-to-presets").addEventListener("click", function(){ renderPresetList(); showScreen("presets"); });
+
+  /* ============================================================
+     Stopwatch
+  ============================================================ */
+  var swAccumulatedMs = 0;
+  var swStartTimestamp = 0;
+  var swRunning = false;
+  var swIntervalId = null;
+
+  function openStopwatch(){
+    swAccumulatedMs = 0;
+    swRunning = false;
+    if (swIntervalId){ clearInterval(swIntervalId); swIntervalId = null; }
+    $("sw-display").textContent = "00:00";
+    $("btn-sw-start-pause").textContent = "Старт";
+    showScreen("stopwatch");
+  }
+  function swUpdateDisplay(){
+    var ms = swAccumulatedMs + (swRunning ? (Date.now() - swStartTimestamp) : 0);
+    $("sw-display").textContent = formatTime(Math.floor(ms/1000));
+  }
+  function swTick(){ swUpdateDisplay(); }
+
+  $("btn-sw-start-pause").addEventListener("click", function(){
+    if (!swRunning){
+      swStartTimestamp = Date.now();
+      swRunning = true;
+      if (swIntervalId) clearInterval(swIntervalId);
+      swIntervalId = setInterval(swTick, 200);
+      requestWakeLock();
+      $("btn-sw-start-pause").textContent = "Пауза";
+    } else {
+      swAccumulatedMs += Date.now() - swStartTimestamp;
+      swRunning = false;
+      clearInterval(swIntervalId); swIntervalId = null;
+      $("btn-sw-start-pause").textContent = "Продолжить";
+    }
+  });
+
+  $("btn-sw-reset").addEventListener("click", function(){
+    swAccumulatedMs = 0;
+    swRunning = false;
+    if (swIntervalId){ clearInterval(swIntervalId); swIntervalId = null; }
+    releaseWakeLock();
+    $("sw-display").textContent = "00:00";
+    $("btn-sw-start-pause").textContent = "Старт";
+  });
+
+  $("btn-sw-back").addEventListener("click", function(){
+    swRunning = false;
+    if (swIntervalId){ clearInterval(swIntervalId); swIntervalId = null; }
+    releaseWakeLock();
+    showScreen("presets");
+  });
+
+  /* ============================================================
+     Init
+  ============================================================ */
+  renderPresetList();
+})();
+</script>
+</body>
+</html>
