@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Спортивный таймер — версии</title>
+<style>
+  :root{
+    --bg:#0b0d10;
+    --surface:#15181d;
+    --surface-2:#1e232a;
+    --border:#2b323c;
+    --text:#f2f4f7;
+    --text-dim:#9aa3af;
+    --accent:#4f8cff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  body{min-height:100vh;}
+  .wrap{max-width:560px;margin:0 auto;padding:32px 20px 48px;}
+  h1{font-size:1.5rem;font-weight:700;margin:0 0 6px;}
+  .sub{color:var(--text-dim);font-size:0.92rem;margin:0 0 28px;line-height:1.5;}
+  .list{display:flex;flex-direction:column;gap:12px;}
+  a.card{
+    display:flex;align-items:center;gap:14px;
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:16px;text-decoration:none;color:var(--text);
+    transition:background 0.15s, border-color 0.15s;
+  }
+  a.card:active,a.card:hover{background:var(--surface-2);border-color:var(--accent);}
+  .badge{
+    width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--surface-2);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;
+    color:var(--accent);border:1px solid var(--border);
+  }
+  .info{flex:1;min-width:0;}
+  .model{font-weight:600;font-size:1.02rem;margin-bottom:2px;}
+  .path{font-size:0.8rem;color:var(--text-dim);}
+  .arrow{color:var(--text-dim);font-size:1.2rem;flex-shrink:0;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Спортивный таймер</h1>
+    <p class="sub">Несколько версий приложения, каждая сделана другой моделью — по ссылке ниже.</p>
+    <div class="list">
+      <a class="card" href="v/1/index.html">
+        <div class="badge">v1</div>
+        <div class="info">
+          <div class="model">OpenAI (ChatGPT)</div>
+          <div class="path">/v/1</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="card" href="v/2/timergr.html">
+        <div class="badge">v2</div>
+        <div class="info">
+          <div class="model">Grok</div>
+          <div class="path">/v/2</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="card" href="v/3/index.html">
+        <div class="badge">v3</div>
+        <div class="info">
+          <div class="model">DeepSeek V4 Pro</div>
+          <div class="path">/v/3</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="card" href="v/4/index.html">
+        <div class="badge">v4</div>
+        <div class="info">
+          <div class="model">Claude Sonnet 5</div>
+          <div class="path">/v/4</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
