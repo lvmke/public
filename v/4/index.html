@@ -43,7 +43,7 @@
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 16px;gap:8px;flex-shrink:0;
   }
-  .top-bar h1{font-size:1.05rem;font-weight:600;margin:0;flex:1;text-align:center;
+  .top-bar h1{font-size:1.2rem;font-weight:600;margin:0;flex:1;text-align:center;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px;}
   .icon-btn{
     background:var(--surface-2);border:1px solid var(--border);color:var(--text);
@@ -53,14 +53,14 @@
   }
   .icon-btn:active{background:var(--surface-3);}
   .text-btn{
-    background:none;border:none;color:var(--accent);font-size:0.95rem;
+    background:none;border:none;color:var(--accent);font-size:1.05rem;
     padding:8px 4px;cursor:pointer;touch-action:manipulation;
   }
 
   /* ---------- generic buttons ---------- */
   .btn{
     border-radius:12px;border:1px solid var(--border);padding:13px 18px;
-    font-size:1rem;font-weight:600;cursor:pointer;touch-action:manipulation;
+    font-size:1.1rem;font-weight:600;cursor:pointer;touch-action:manipulation;
     background:var(--surface-2);color:var(--text);
   }
   .btn:active{filter:brightness(1.15);}
@@ -83,17 +83,17 @@
     cursor:pointer;touch-action:manipulation;
   }
   .stopwatch-link .swi{font-size:1.4rem;}
-  .stopwatch-link .swt{font-weight:600;}
-  .stopwatch-link .sws{font-size:0.82rem;color:var(--text-dim);}
-  .section-label{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin:18px 0 8px;}
+  .stopwatch-link .swt{font-weight:600;font-size:1.1rem;}
+  .stopwatch-link .sws{font-size:0.92rem;color:var(--text-dim);}
+  .section-label{font-size:0.88rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin:18px 0 8px;}
   .preset-list{display:flex;flex-direction:column;gap:10px;}
   .preset-item{
     position:relative;background:var(--surface);border:1px solid var(--border);
     border-radius:14px;padding:14px 48px 14px 16px;cursor:pointer;touch-action:manipulation;
   }
   .preset-item:active{background:var(--surface-2);}
-  .preset-name{font-weight:600;font-size:1.02rem;margin-bottom:4px;}
-  .preset-summary{font-size:0.82rem;color:var(--text-dim);line-height:1.4;}
+  .preset-name{font-weight:600;font-size:1.14rem;margin-bottom:4px;}
+  .preset-summary{font-size:0.94rem;color:var(--text-dim);line-height:1.4;}
   .preset-edit-btn{
     position:absolute;top:10px;right:10px;width:32px;height:32px;
     background:var(--surface-3);border:1px solid var(--border);border-radius:8px;
@@ -101,15 +101,15 @@
     color:var(--text-dim);cursor:pointer;touch-action:manipulation;
   }
   .preset-edit-btn:active{background:var(--surface-2);color:var(--text);}
-  .empty-note{color:var(--text-dim);font-size:0.9rem;padding:12px 2px;}
+  .empty-note{color:var(--text-dim);font-size:1rem;padding:12px 2px;}
 
   /* ---------- editor screen ---------- */
   #screen-editor .content{padding:4px 16px 28px;flex:1;}
   .field{margin-bottom:16px;}
-  .field label{display:block;font-size:0.85rem;color:var(--text-dim);margin-bottom:6px;}
+  .field label{display:block;font-size:0.95rem;color:var(--text-dim);margin-bottom:6px;}
   .field input[type=text], .field input[type=number], .field select{
     width:100%;background:var(--surface-2);border:1px solid var(--border);
-    color:var(--text);border-radius:10px;padding:12px 14px;font-size:1rem;
+    color:var(--text);border-radius:10px;padding:12px 14px;font-size:1.1rem;
   }
   .field input:focus, .field select:focus{outline:none;border-color:var(--accent);}
   .field-row{display:flex;gap:12px;}
@@ -119,7 +119,7 @@
     background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
     padding:12px 14px;margin-bottom:10px;
   }
-  .toggle-field span{font-size:0.95rem;}
+  .toggle-field span{font-size:1.05rem;}
   .switch{position:relative;width:44px;height:26px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
   .slider{position:absolute;inset:0;background:var(--surface-3);border-radius:999px;transition:0.15s;cursor:pointer;}
@@ -129,7 +129,7 @@
   .subfield{margin-top:-2px;margin-bottom:14px;}
   .subfield.disabled{opacity:0.4;pointer-events:none;}
   .editor-actions{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
-  .error-text{color:var(--danger);font-size:0.85rem;min-height:1.2em;margin:2px 0 12px;}
+  .error-text{color:var(--danger);font-size:0.95rem;min-height:1.2em;margin:2px 0 12px;}
 
   /* ---------- timer / stopwatch screens ---------- */
   .phase-screen{flex:1;display:flex;flex-direction:column;transition:background 0.4s ease;}
@@ -139,9 +139,10 @@
   .phase-screen[data-phase="cooldown"]{background:radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--c-cooldown) 22%, var(--bg)), var(--bg) 70%);}
   .phase-screen[data-phase="idle"]{background:var(--bg);}
 
-  .timer-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:14px;}
+  .timer-main{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;}
+  .timer-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:14px;min-width:0;}
   .phase-label{
-    font-size:1.15rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
+    font-size:1.35rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
     padding:6px 18px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);
   }
   [data-phase="warmup"] .phase-label{color:var(--c-warmup);border-color:var(--c-warmup);}
@@ -149,7 +150,7 @@
   [data-phase="rest"] .phase-label{color:var(--c-rest);border-color:var(--c-rest);}
   [data-phase="cooldown"] .phase-label{color:var(--c-cooldown);border-color:var(--c-cooldown);}
 
-  .round-indicator{font-size:0.95rem;color:var(--text-dim);}
+  .round-indicator{font-size:1.1rem;color:var(--text-dim);}
   .timer-display{
     font-size:clamp(4.2rem, 26vw, 9.5rem);font-weight:700;line-height:1;
     font-variant-numeric:tabular-nums;letter-spacing:1px;
@@ -162,8 +163,28 @@
   .overall-progress{width:100%;max-width:360px;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:2px;}
   .overall-progress-fill{height:100%;background:var(--accent);width:0%;transition:width 0.2s linear;}
 
-  .timer-controls{padding:18px 20px 22px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;}
-  .timer-controls .btn-row .btn{padding:15px 10px;font-size:0.95rem;}
+  .timer-controls{
+    height:33vh;max-height:33vh;box-sizing:border-box;flex-shrink:0;
+    padding:12px 20px 14px;
+    display:flex;flex-direction:column;justify-content:center;gap:10px;
+  }
+  .timer-controls .btn{padding:9px 12px;font-size:0.85rem;}
+  .timer-controls .btn-row .btn{padding:9px 10px;font-size:0.82rem;}
+
+  /* ---------- landscape: controls move to a right-hand column ---------- */
+  @media (orientation:landscape){
+    .timer-main{flex-direction:row;}
+    .timer-body{padding:10px 14px;}
+    .round-markers{max-width:100%;}
+    .overall-progress{max-width:100%;}
+    .timer-controls{
+      height:auto;max-height:none;width:34vw;max-width:220px;min-width:150px;
+      flex-shrink:0;flex-direction:column;justify-content:center;
+      padding:14px 14px 14px 10px;gap:10px;
+      border-left:1px solid var(--border);
+    }
+    .timer-controls .btn-row{flex-direction:column;}
+  }
 
   .warning-banner{
     margin:0 16px 12px;padding:10px 12px;background:#3a2a12;border:1px solid #6b4a17;
@@ -174,10 +195,10 @@
   /* ---------- finish screen ---------- */
   #screen-finish .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px;text-align:center;}
   .finish-emoji{font-size:3.2rem;}
-  .finish-title{font-size:1.4rem;font-weight:700;}
+  .finish-title{font-size:1.55rem;font-weight:700;}
   .finish-stats{display:flex;gap:26px;}
   .finish-stat-val{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;}
-  .finish-stat-label{font-size:0.78rem;color:var(--text-dim);margin-top:2px;}
+  .finish-stat-label{font-size:0.9rem;color:var(--text-dim);margin-top:2px;}
   .finish-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;margin-top:8px;}
 
   /* ---------- modal ---------- */
@@ -188,13 +209,13 @@
   .modal-overlay.hidden{display:none;}
   .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;
     padding:20px;max-width:360px;width:100%;}
-  .modal p{margin:0 0 18px;font-size:0.98rem;line-height:1.45;}
+  .modal p{margin:0 0 18px;font-size:1.08rem;line-height:1.45;}
   .modal-buttons{display:flex;flex-direction:column;gap:10px;}
 
   /* ---------- toast ---------- */
   #toast-host{position:fixed;left:0;right:0;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:60;pointer-events:none;}
   .toast{background:var(--surface-3);border:1px solid var(--border);color:var(--text);
-    padding:10px 16px;border-radius:999px;font-size:0.85rem;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+    padding:10px 16px;border-radius:999px;font-size:0.95rem;box-shadow:0 4px 14px rgba(0,0,0,0.4);
     max-width:85%;text-align:center;animation:toast-in 0.15s ease;}
   @keyframes toast-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
@@ -317,18 +338,20 @@
       <div class="warning-banner hidden" id="timer-wakelock-warning">
         Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть во время тренировки.
       </div>
-      <div class="timer-body">
-        <div class="phase-label" id="phase-label">Готово</div>
-        <div class="round-indicator" id="round-indicator"></div>
-        <div class="timer-display" id="timer-display">00:00</div>
-        <div class="round-markers" id="round-markers"></div>
-        <div class="overall-progress"><div class="overall-progress-fill" id="overall-progress-fill"></div></div>
-      </div>
-      <div class="timer-controls">
-        <button class="btn btn-primary btn-block" id="btn-start-pause">Старт</button>
-        <div class="btn-row">
-          <button class="btn btn-secondary" id="btn-reset">Сброс</button>
-          <button class="btn btn-secondary" id="btn-skip">Пропустить фазу</button>
+      <div class="timer-main">
+        <div class="timer-body">
+          <div class="phase-label" id="phase-label">Готово</div>
+          <div class="round-indicator" id="round-indicator"></div>
+          <div class="timer-display" id="timer-display">00:00</div>
+          <div class="round-markers" id="round-markers"></div>
+          <div class="overall-progress"><div class="overall-progress-fill" id="overall-progress-fill"></div></div>
+        </div>
+        <div class="timer-controls">
+          <button class="btn btn-primary btn-block" id="btn-start-pause">Старт</button>
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="btn-reset">Сброс</button>
+            <button class="btn btn-secondary" id="btn-skip">Пропустить фазу</button>
+          </div>
         </div>
       </div>
     </div>
@@ -372,12 +395,14 @@
       <div class="warning-banner hidden" id="sw-wakelock-warning">
         Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть.
       </div>
-      <div class="timer-body">
-        <div class="timer-display" id="sw-display">00:00</div>
-      </div>
-      <div class="timer-controls">
-        <button class="btn btn-primary btn-block" id="btn-sw-start-pause">Старт</button>
-        <button class="btn btn-secondary btn-block" id="btn-sw-reset">Сброс</button>
+      <div class="timer-main">
+        <div class="timer-body">
+          <div class="timer-display" id="sw-display">00:00</div>
+        </div>
+        <div class="timer-controls">
+          <button class="btn btn-primary btn-block" id="btn-sw-start-pause">Старт</button>
+          <button class="btn btn-secondary btn-block" id="btn-sw-reset">Сброс</button>
+        </div>
       </div>
     </div>
   </section>
@@ -1083,7 +1108,13 @@
 
   $("btn-start-pause").addEventListener("click", onStartPauseClick);
   $("btn-reset").addEventListener("click", onResetClick);
-  $("btn-skip").addEventListener("click", onSkipClick);
+  $("btn-skip").addEventListener("click", function(){
+    var btn = $("btn-skip");
+    if (btn.disabled) return;
+    onSkipClick();
+    btn.disabled = true;
+    setTimeout(function(){ btn.disabled = false; }, 1000);
+  });
   $("btn-timer-back").addEventListener("click", backFromTimer);
 
   $("btn-finish-repeat").addEventListener("click", function(){ startTimerScreen(currentPreset); });
