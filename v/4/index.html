@@ -142,6 +142,8 @@
 
   .timer-main{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;}
   .timer-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:14px;min-width:0;}
+  /* timer screen: top bar + digits share the left block, controls get the full height on the right in landscape */
+  .timer-left{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;}
   .phase-label{
     font-size:1.35rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
     padding:6px 18px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);
@@ -153,7 +155,7 @@
 
   .round-indicator{font-size:1.1rem;color:var(--text-dim);}
   .timer-display{
-    font-size:clamp(4.2rem, 26vw, 9.5rem);font-weight:700;line-height:1;
+    font-size:clamp(4.6rem, 28vw, 11rem);font-weight:700;line-height:1;
     font-variant-numeric:tabular-nums;letter-spacing:1px;
   }
   .round-markers{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:320px;}
@@ -187,12 +189,12 @@
     .phase-label{font-size:1.15rem;padding:4px 16px;}
     .round-indicator{font-size:1rem;}
     /* digits fill the free space: width-bound by cqw, height-bound by cqh minus the other rows */
-    .timer-display{font-size:min(30cqw, calc(100cqh - 130px));white-space:nowrap;}
+    .timer-display{font-size:min(33cqw, calc(100cqh - 110px));white-space:nowrap;}
     #sw-display{font-size:min(30cqw, calc(100cqh - 20px));}
     .round-markers{max-width:100%;}
     .overall-progress{max-width:100%;}
     .timer-controls{
-      height:auto;max-height:none;width:32vw;min-width:150px;
+      height:auto;max-height:none;width:26vw;min-width:140px;
       flex-shrink:0;
       padding:10px 12px 10px 10px;gap:10px;
       border-left:1px solid var(--border);
@@ -344,21 +346,23 @@
   <!-- ===================== Screen 3: Timer ===================== -->
   <section id="screen-timer" class="screen">
     <div class="phase-screen" data-phase="idle" id="phase-screen">
-      <div class="top-bar">
-        <button class="icon-btn" id="btn-timer-back">←</button>
-        <h1 id="timer-title">Тренировка</h1>
-        <button class="icon-btn" id="btn-sound">🔊</button>
-      </div>
-      <div class="warning-banner hidden" id="timer-wakelock-warning">
-        Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть во время тренировки.
-      </div>
       <div class="timer-main">
-        <div class="timer-body">
-          <div class="phase-label" id="phase-label">Готово</div>
-          <div class="round-indicator" id="round-indicator"></div>
-          <div class="timer-display" id="timer-display">00:00</div>
-          <div class="round-markers" id="round-markers"></div>
-          <div class="overall-progress"><div class="overall-progress-fill" id="overall-progress-fill"></div></div>
+        <div class="timer-left">
+          <div class="top-bar">
+            <button class="icon-btn" id="btn-timer-back">←</button>
+            <h1 id="timer-title">Тренировка</h1>
+            <button class="icon-btn" id="btn-sound">🔊</button>
+          </div>
+          <div class="warning-banner hidden" id="timer-wakelock-warning">
+            Блокировка сна экрана не поддерживается этим браузером — экран может погаснуть во время тренировки.
+          </div>
+          <div class="timer-body">
+            <div class="phase-label" id="phase-label">Готово</div>
+            <div class="round-indicator" id="round-indicator"></div>
+            <div class="timer-display" id="timer-display">00:00</div>
+            <div class="round-markers" id="round-markers"></div>
+            <div class="overall-progress"><div class="overall-progress-fill" id="overall-progress-fill"></div></div>
+          </div>
         </div>
         <div class="timer-controls">
           <button class="btn btn-primary btn-block" id="btn-start-pause">Старт</button>
@@ -519,6 +523,26 @@
   function showScreen(name){
     document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
     $("screen-"+name).classList.add("active");
+  }
+  // Fullscreen hides the browser address bar. Browsers only allow entering it from a
+  // user gesture, so this must be called synchronously from a click handler.
+  // Not available on iPhone (only <video> can go fullscreen there) — then it's a no-op.
+  function enterFullscreen(){
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+    try {
+      var res = req.call(el, { navigationUI: "hide" });
+      if (res && res.catch) res.catch(function(){});
+    } catch(e){}
+  }
+  function exitFullscreen(){
+    if (!(document.fullscreenElement || document.webkitFullscreenElement)) return;
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    try {
+      var res = exit.call(document);
+      if (res && res.catch) res.catch(function(){});
+    } catch(e){}
   }
   function presetSummary(p){
     var parts = [];
@@ -976,6 +1000,7 @@
     lastTickSecond = null;
     if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
     $("timer-title").textContent = preset.name || "Тренировка";
+    enterFullscreen();
     showScreen("timer");
     updateTimerDisplay();
   }
@@ -1116,6 +1141,7 @@
     if (tickIntervalId){ clearInterval(tickIntervalId); tickIntervalId = null; }
     timerState = "ready";
     releaseWakeLock();
+    exitFullscreen();
     renderPresetList();
     showScreen("presets");
   }
@@ -1132,7 +1158,7 @@
   $("btn-timer-back").addEventListener("click", backFromTimer);
 
   $("btn-finish-repeat").addEventListener("click", function(){ startTimerScreen(currentPreset); });
-  $("btn-finish-to-presets").addEventListener("click", function(){ renderPresetList(); showScreen("presets"); });
+  $("btn-finish-to-presets").addEventListener("click", function(){ exitFullscreen(); renderPresetList(); showScreen("presets"); });
 
   /* ============================================================
      Stopwatch
